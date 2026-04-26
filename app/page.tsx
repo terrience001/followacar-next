@@ -139,6 +139,7 @@ export default function Home() {
                 <button id="group-call-btn">{t.joinVoice}</button>
                 <button id="mute-btn">{t.mute}</button>
                 <button id="stream-btn">{t.live}</button>
+                <button id="flip-btn">{t.flipCamera}</button>
                 <button id="screen-btn">{t.screen}</button>
               </div>
               <div className="peer-status" id="peer-status"></div>
@@ -476,7 +477,7 @@ function bootApp(lang: Lang) {
   const peers: Record<string,any>={},peerRoles: Record<string,string>={},dataChannels: Record<string,any>={};
   const audioEls: Record<string,HTMLAudioElement>={},videoEls: Record<string,HTMLElement>={};
   let localStream: MediaStream|null=null,inCall=false,muted=false,lastSigId=0;
-  let streamTrack: MediaStreamTrack|null=null,streaming=false;
+  let streamTrack: MediaStreamTrack|null=null,streaming=false,facingMode:'user'|'environment'='environment';
 
   function initCall(){
     el('my-name-label').textContent=ME;
@@ -486,6 +487,8 @@ function bootApp(lang: Lang) {
     el('group-call-btn').onclick=async()=>inCall?leaveGroupCall():await joinGroupCall();
     el('mute-btn').onclick=()=>{muted=!muted;localStream?.getAudioTracks().forEach(t=>t.enabled=!muted);const b=el('mute-btn');b.textContent=muted?tr('unmute','🔇 Unmute'):tr('mute','🎙 Mute');b.classList.toggle('muted',muted);if(voiceStatus[ME])voiceStatus[ME].muted=muted;broadcastSignal(JSON.stringify({type:'call-mute',muted}));updateMembersVoice();};
     el('stream-btn').onclick=()=>streaming?stopStream():startStream('camera');
+    el('flip-btn').style.display='none';
+    el('flip-btn').onclick=()=>flipCamera();
     if(!navigator.mediaDevices?.getDisplayMedia)el('screen-btn').style.display='none';
     else el('screen-btn').onclick=()=>startStream('screen');
     el('logout-btn').onclick=()=>{
@@ -521,11 +524,26 @@ function bootApp(lang: Lang) {
   function removeVideo(name: string){videoEls[name]?.remove();delete videoEls[name];if(!Object.keys(videoEls).length)el('video-container').style.display='none';}
   async function startStream(mode: string){
     try{
-      const stream=mode==='screen'?await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15} as any,audio:false}):await navigator.mediaDevices.getUserMedia({video:{width:640,height:360,frameRate:15} as any,audio:false});
-      streamTrack=stream.getVideoTracks()[0];streaming=true;showVideo('local',stream);updateStreamUI();streamTrack.onended=stopStream;
+      const stream=mode==='screen'?await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15} as any,audio:false}):await navigator.mediaDevices.getUserMedia({video:{width:640,height:360,frameRate:15,facingMode} as any,audio:false});
+      streamTrack=stream.getVideoTracks()[0];streaming=true;showVideo('local',stream);updateStreamUI(mode);streamTrack.onended=stopStream;
       for(const[n,pc] of Object.entries(peers)){pc.addTrack(streamTrack,stream);if(peerRoles[n]==='caller')await renegotiate(n,pc);}
       broadcastSignal(JSON.stringify({type:'stream-start'}));
     }catch(e: any){alert(tr('micError','Cannot access camera: ')+e.message);}
+  }
+  async function flipCamera(){
+    if(!streaming)return;
+    facingMode=facingMode==='environment'?'user':'environment';
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:360,frameRate:15,facingMode} as any,audio:false});
+      const newTrack=stream.getVideoTracks()[0];
+      for(const[,pc] of Object.entries(peers)){
+        const sender=pc.getSenders().find((s: any)=>s.track?.kind==='video');
+        if(sender)await sender.replaceTrack(newTrack);
+      }
+      streamTrack?.stop();streamTrack=newTrack;streamTrack.onended=stopStream;
+      const lv=document.querySelector('#vw-local video') as HTMLVideoElement;
+      if(lv)lv.srcObject=stream;
+    }catch(e: any){alert(tr('micError','Cannot access camera: ')+e.message);facingMode=facingMode==='environment'?'user':'environment';}
   }
   async function stopStream(){
     if(!streaming)return;streamTrack?.stop();streamTrack=null;streaming=false;removeVideo('local');updateStreamUI();
@@ -533,7 +551,8 @@ function bootApp(lang: Lang) {
     broadcastSignal(JSON.stringify({type:'stream-stop'}));
   }
   async function renegotiate(name: string,pc: any){try{const o=await pc.createOffer();await pc.setLocalDescription(o);sendSignal(name,JSON.stringify({type:'voice-offer',sdp:o.sdp}));}catch(e){}}
-  function updateStreamUI(){const sb=el('stream-btn'),scb=el('screen-btn'),h=!!navigator.mediaDevices?.getDisplayMedia;if(streaming){sb.textContent=tr('stopLive','⏹ Stop live');sb.classList.add('streaming');scb.style.display='none';}else{sb.textContent=tr('live','📹 Live');sb.classList.remove('streaming');scb.style.display=h?'inline-block':'none';}}
+  let _streamMode='';
+  function updateStreamUI(mode=''){if(mode)_streamMode=mode;const sb=el('stream-btn'),scb=el('screen-btn'),fb=el('flip-btn'),h=!!navigator.mediaDevices?.getDisplayMedia;if(streaming){sb.textContent=tr('stopLive','⏹ Stop live');sb.classList.add('streaming');scb.style.display='none';fb.style.display=_streamMode==='camera'?'inline-block':'none';}else{sb.textContent=tr('live','📹 Live');sb.classList.remove('streaming');scb.style.display=h?'inline-block':'none';fb.style.display='none';}}
   function setupDC(name: string,dc: any){dataChannels[name]=dc;dc.onmessage=(e: MessageEvent)=>{try{const d=JSON.parse(e.data);if(d.type==='loc'&&d.name&&d.lat&&d.lng)updateMarkers(lastMemberList.map(p=>p.name===d.name?{...p,lat:d.lat,lng:d.lng,ts:Math.floor(Date.now()/1000)}:p));}catch(e){}};dc.onclose=()=>{delete dataChannels[name];};}
   function broadcastLocation(lat: number,lng: number){const msg=JSON.stringify({type:'loc',name:ME,lat,lng});Object.values(dataChannels).forEach((dc: any)=>{try{if(dc.readyState==='open')dc.send(msg);}catch(e){}});}
   async function callPeer(target: string){
