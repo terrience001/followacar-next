@@ -142,6 +142,9 @@ export default function Home() {
                 <button id="screen-btn">{t.screen}</button>
               </div>
               <div className="peer-status" id="peer-status"></div>
+              <div style={{marginTop:'1rem',borderTop:'1px solid #334155',paddingTop:'.75rem'}}>
+                <button id="logout-btn" style={{background:'transparent',color:'#f87171',border:'1px solid #f87171',borderRadius:'8px',padding:'.45rem 1rem',fontSize:'.85rem',cursor:'pointer',width:'100%'}}>{t.logout}</button>
+              </div>
             </div>
           </div>
         </div>
@@ -485,6 +488,13 @@ function bootApp(lang: Lang) {
     el('stream-btn').onclick=()=>streaming?stopStream():startStream('camera');
     if(!navigator.mediaDevices?.getDisplayMedia)el('screen-btn').style.display='none';
     else el('screen-btn').onclick=()=>startStream('screen');
+    el('logout-btn').onclick=()=>{
+      if(!confirm(tr('logoutConfirm','Are you sure you want to leave the room?')))return;
+      if(inCall)leaveGroupCall();
+      localStorage.removeItem('room');localStorage.removeItem('name');
+      sessionStorage.removeItem('room');sessionStorage.removeItem('name');
+      location.href=location.origin;
+    };
   }
   async function joinGroupCall(){
     try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}catch(e: any){alert(tr('micError','Cannot access microphone: ')+e.message);return;}

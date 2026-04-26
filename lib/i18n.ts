@@ -89,6 +89,8 @@ type Translations = {
   openGmaps: string;
   longPressCoord: string;
   copyCoordBelow: string;
+  logout: string;
+  logoutConfirm: string;
 };
 
 const T: Record<Lang, Translations> = {
@@ -113,6 +115,7 @@ const T: Record<Lang, Translations> = {
     micError:'無法取得麥克風：',uploadFailed:'上傳失敗：',
     gpsPermDenied:'定位被拒絕，請開啟瀏覽器位置權限',gpsNoSignal:'無法取得位置訊號',gpsTimeout:'定位逾時',
     openGmaps:'點此開啟 Google Maps',longPressCoord:'長按地圖上的目的地標記',copyCoordBelow:'複製畫面頂部顯示的座標填入下方',
+    logout:'🚪 離開房間',logoutConfirm:'確定要離開房間嗎？',
   },
   'en': {
     nameplaceholder:'Enter your name',createRoom:'＋ Create New Room',orJoin:'── or join an active room ──',
@@ -135,6 +138,7 @@ const T: Record<Lang, Translations> = {
     micError:'Cannot access microphone: ',uploadFailed:'Upload failed: ',
     gpsPermDenied:'Location denied, please enable browser location permission',gpsNoSignal:'Cannot get location signal',gpsTimeout:'Location timeout',
     openGmaps:'Open Google Maps',longPressCoord:'Long-press the destination on the map',copyCoordBelow:'Copy the coordinates shown at the top and paste below',
+    logout:'🚪 Leave room',logoutConfirm:'Are you sure you want to leave the room?',
   },
   'ja': {
     nameprintf:'名前を入力してください',nameplaceholder:'名前を入力してください',createRoom:'＋ 新しいルームを作成',orJoin:'── またはアクティブなルームに参加 ──',
@@ -157,6 +161,7 @@ const T: Record<Lang, Translations> = {
     micError:'マイクにアクセスできません：',uploadFailed:'アップロード失敗：',
     gpsPermDenied:'位置情報が拒否されました。ブラウザの位置情報を有効にしてください',gpsNoSignal:'位置情報を取得できません',gpsTimeout:'位置情報タイムアウト',
     openGmaps:'Google Mapsを開く',longPressCoord:'地図上の目的地を長押し',copyCoordBelow:'上部に表示された座標をコピーして下に貼り付け',
+    logout:'🚪 ルームを退出',logoutConfirm:'ルームを退出してもよろしいですか？',
   } as any,
   'ko': {
     nameplaceholder:'이름을 입력하세요',createRoom:'＋ 새 방 만들기',orJoin:'── 또는 활성 방에 참여 ──',
@@ -179,6 +184,7 @@ const T: Record<Lang, Translations> = {
     micError:'마이크 접근 불가：',uploadFailed:'업로드 실패：',
     gpsPermDenied:'위치 권한이 거부됨. 브라우저 위치 권한을 활성화하세요',gpsNoSignal:'위치 신호를 가져올 수 없음',gpsTimeout:'위치 시간 초과',
     openGmaps:'Google Maps 열기',longPressCoord:'지도에서 목적지를 길게 누르기',copyCoordBelow:'상단에 표시된 좌표를 복사해 아래에 붙여넣기',
+    logout:'🚪 방 나가기',logoutConfirm:'방을 나가시겠습니까?',
   } as any,
   'es': {
     nameplaceholder:'Ingresa tu nombre',createRoom:'＋ Crear nueva sala',orJoin:'── o únete a una sala activa ──',
@@ -201,6 +207,7 @@ const T: Record<Lang, Translations> = {
     micError:'No se puede acceder al micrófono: ',uploadFailed:'Error al subir: ',
     gpsPermDenied:'Ubicación denegada, activa los permisos de ubicación',gpsNoSignal:'No se puede obtener señal de ubicación',gpsTimeout:'Tiempo de espera de ubicación',
     openGmaps:'Abrir Google Maps',longPressCoord:'Mantén presionado el destino en el mapa',copyCoordBelow:'Copia las coordenadas mostradas arriba y pégalas abajo',
+    logout:'🚪 Salir de la sala',logoutConfirm:'¿Seguro que quieres salir de la sala?',
   } as any,
   'fr': {
     nameplaceholder:'Entrez votre nom',createRoom:'＋ Créer une salle',orJoin:'── ou rejoindre une salle active ──',
@@ -223,6 +230,7 @@ const T: Record<Lang, Translations> = {
     micError:'Impossible d\'accéder au microphone : ',uploadFailed:'Échec du téléversement : ',
     gpsPermDenied:'Localisation refusée, activez la permission de localisation',gpsNoSignal:'Impossible d\'obtenir le signal de localisation',gpsTimeout:'Délai de localisation dépassé',
     openGmaps:'Ouvrir Google Maps',longPressCoord:'Appuyez longuement sur la destination sur la carte',copyCoordBelow:'Copiez les coordonnées affichées en haut et collez-les ci-dessous',
+    logout:'🚪 Quitter la salle',logoutConfirm:'Voulez-vous vraiment quitter la salle ?',
   } as any,
   'de': {
     nameplaceholder:'Name eingeben',createRoom:'＋ Neuen Raum erstellen',orJoin:'── oder aktivem Raum beitreten ──',
@@ -245,6 +253,7 @@ const T: Record<Lang, Translations> = {
     micError:'Mikrofon nicht erreichbar: ',uploadFailed:'Upload fehlgeschlagen: ',
     gpsPermDenied:'Standort abgelehnt, bitte Standortberechtigung aktivieren',gpsNoSignal:'Kein Standortsignal',gpsTimeout:'Standort-Timeout',
     openGmaps:'Google Maps öffnen',longPressCoord:'Ziel auf der Karte gedrückt halten',copyCoordBelow:'Oben angezeigte Koordinaten kopieren und unten einfügen',
+    logout:'🚪 Raum verlassen',logoutConfirm:'Raum wirklich verlassen?',
   } as any,
   'pt': {
     nameplaceholder:'Digite seu nome',createRoom:'＋ Criar nova sala',orJoin:'── ou entre em uma sala ativa ──',
@@ -267,6 +276,7 @@ const T: Record<Lang, Translations> = {
     micError:'Não é possível acessar o microfone: ',uploadFailed:'Falha no envio: ',
     gpsPermDenied:'Localização negada, ative a permissão de localização',gpsNoSignal:'Não é possível obter sinal de localização',gpsTimeout:'Tempo limite de localização',
     openGmaps:'Abrir Google Maps',longPressCoord:'Pressione por no destino no mapa',copyCoordBelow:'Copie as coordenadas exibidas acima e cole abaixo',
+    logout:'🚪 Sair da sala',logoutConfirm:'Tem certeza que quer sair da sala?',
   } as any,
   'ar': {
     nameplaceholder:'أدخل اسمك',createRoom:'＋ إنشاء غرفة جديدة',orJoin:'── أو انضم إلى غرفة نشطة ──',
@@ -289,6 +299,7 @@ const T: Record<Lang, Translations> = {
     micError:'لا يمكن الوصول للميكروفون: ',uploadFailed:'فشل الرفع: ',
     gpsPermDenied:'تم رفض الموقع، يرجى تفعيل إذن الموقع',gpsNoSignal:'لا يمكن الحصول على إشارة الموقع',gpsTimeout:'انتهت مهلة الموقع',
     openGmaps:'فتح خرائط Google',longPressCoord:'اضغط مطولاً على الوجهة في الخريطة',copyCoordBelow:'انسخ الإحداثيات المعروضة أعلاه والصقها أدناه',
+    logout:'🚪 مغادرة الغرفة',logoutConfirm:'هل أنت متأكد من مغادرة الغرفة؟',
   } as any,
   'hi': {
     nameplaceholder:'अपना नाम दर्ज करें',createRoom:'＋ नया रूम बनाएं',orJoin:'── या किसी सक्रिय रूम में शामिल हों ──',
@@ -311,6 +322,7 @@ const T: Record<Lang, Translations> = {
     micError:'माइक्रोफ़ोन एक्सेस नहीं हो सका: ',uploadFailed:'अपलोड विफल: ',
     gpsPermDenied:'लोकेशन अस्वीकृत, ब्राउज़र लोकेशन परमिशन चालू करें',gpsNoSignal:'लोकेशन सिग्नल नहीं मिला',gpsTimeout:'लोकेशन टाइमआउट',
     openGmaps:'Google Maps खोलें',longPressCoord:'मानचित्र पर गंतव्य को देर तक दबाएं',copyCoordBelow:'ऊपर दिखाए गए कोऑर्डिनेट कॉपी करें और नीचे पेस्ट करें',
+    logout:'🚪 रूम छोड़ें',logoutConfirm:'क्या आप वाकई रूम छोड़ना चाहते हैं?',
   } as any,
   'it': {
     nameplaceholder:'Inserisci il tuo nome',createRoom:'＋ Crea nuova stanza',orJoin:'── o unisciti a una stanza attiva ──',
@@ -333,6 +345,7 @@ const T: Record<Lang, Translations> = {
     micError:'Impossibile accedere al microfono: ',uploadFailed:'Caricamento fallito: ',
     gpsPermDenied:'Posizione negata, attiva il permesso di posizione',gpsNoSignal:'Impossibile ottenere segnale di posizione',gpsTimeout:'Timeout posizione',
     openGmaps:'Apri Google Maps',longPressCoord:'Tieni premuto la destinazione sulla mappa',copyCoordBelow:'Copia le coordinate mostrate in alto e incollale sotto',
+    logout:'🚪 Esci dalla stanza',logoutConfirm:'Sei sicuro di voler uscire dalla stanza?',
   } as any,
   'ru': {
     nameplaceholder:'Введите ваше имя',createRoom:'＋ Создать комнату',orJoin:'── или войти в активную комнату ──',
@@ -355,6 +368,7 @@ const T: Record<Lang, Translations> = {
     micError:'Нет доступа к микрофону: ',uploadFailed:'Ошибка загрузки: ',
     gpsPermDenied:'Доступ к местоположению отклонён, включите разрешение',gpsNoSignal:'Нет сигнала местоположения',gpsTimeout:'Тайм-аут местоположения',
     openGmaps:'Открыть Google Maps',longPressCoord:'Удерживайте место назначения на карте',copyCoordBelow:'Скопируйте показанные координаты и вставьте ниже',
+    logout:'🚪 Покинуть комнату',logoutConfirm:'Вы уверены, что хотите покинуть комнату?',
   } as any,
   'th': {
     nameplaceholder:'ใส่ชื่อของคุณ',createRoom:'＋ สร้างห้องใหม่',orJoin:'── หรือเข้าร่วมห้องที่เปิดอยู่ ──',
@@ -377,6 +391,7 @@ const T: Record<Lang, Translations> = {
     micError:'ไม่สามารถเข้าถึงไมค์: ',uploadFailed:'อัปโหลดล้มเหลว: ',
     gpsPermDenied:'ถูกปฏิเสธตำแหน่ง กรุณาเปิดอนุญาตตำแหน่ง',gpsNoSignal:'ไม่มีสัญญาณตำแหน่ง',gpsTimeout:'หมดเวลาตำแหน่ง',
     openGmaps:'เปิด Google Maps',longPressCoord:'กดค้างที่จุดหมายบนแผนที่',copyCoordBelow:'คัดลอกพิกัดที่แสดงด้านบนแล้ววางด้านล่าง',
+    logout:'🚪 ออกจากห้อง',logoutConfirm:'แน่ใจหรือว่าต้องการออกจากห้อง?',
   } as any,
   'vi': {
     nameplaceholder:'Nhập tên của bạn',createRoom:'＋ Tạo phòng mới',orJoin:'── hoặc tham gia phòng đang mở ──',
@@ -399,6 +414,7 @@ const T: Record<Lang, Translations> = {
     micError:'Không truy cập được mic: ',uploadFailed:'Tải lên thất bại: ',
     gpsPermDenied:'Vị trí bị từ chối, hãy bật quyền vị trí',gpsNoSignal:'Không có tín hiệu vị trí',gpsTimeout:'Hết thời gian chờ vị trí',
     openGmaps:'Mở Google Maps',longPressCoord:'Nhấn giữ điểm đến trên bản đồ',copyCoordBelow:'Sao chép tọa độ hiển thị ở trên và dán bên dưới',
+    logout:'🚪 Rời phòng',logoutConfirm:'Bạn chắc chắn muốn rời phòng?',
   } as any,
   'id': {
     nameplaceholder:'Masukkan nama Anda',createRoom:'＋ Buat ruangan baru',orJoin:'── atau bergabung ruangan aktif ──',
@@ -421,6 +437,7 @@ const T: Record<Lang, Translations> = {
     micError:'Tidak dapat mengakses mikrofon: ',uploadFailed:'Gagal mengunggah: ',
     gpsPermDenied:'Lokasi ditolak, aktifkan izin lokasi',gpsNoSignal:'Tidak dapat memperoleh sinyal lokasi',gpsTimeout:'Waktu habis untuk lokasi',
     openGmaps:'Buka Google Maps',longPressCoord:'Tekan lama tujuan di peta',copyCoordBelow:'Salin koordinat yang ditampilkan di atas dan tempel di bawah',
+    logout:'🚪 Keluar ruangan',logoutConfirm:'Yakin ingin keluar dari ruangan?',
   } as any,
   'tr': {
     nameplaceholder:'Adınızı girin',createRoom:'＋ Yeni oda oluştur',orJoin:'── veya aktif bir odaya katıl ──',
@@ -443,6 +460,7 @@ const T: Record<Lang, Translations> = {
     micError:'Mikrofona erişilemiyor: ',uploadFailed:'Yükleme başarısız: ',
     gpsPermDenied:'Konum reddedildi, konum iznini etkinleştirin',gpsNoSignal:'Konum sinyali alınamıyor',gpsTimeout:'Konum zaman aşımı',
     openGmaps:'Google Maps\'i aç',longPressCoord:'Haritada hedefe uzun basın',copyCoordBelow:'Üstte gösterilen koordinatları kopyalayıp aşağıya yapıştırın',
+    logout:'🚪 Odadan çık',logoutConfirm:'Odadan çıkmak istediğinize emin misiniz?',
   } as any,
   'pl': {
     nameplaceholder:'Wpisz swoje imię',createRoom:'＋ Utwórz nowy pokój',orJoin:'── lub dołącz do aktywnego pokoju ──',
@@ -465,6 +483,7 @@ const T: Record<Lang, Translations> = {
     micError:'Brak dostępu do mikrofonu: ',uploadFailed:'Przesyłanie nie powiodło się: ',
     gpsPermDenied:'Lokalizacja odrzucona, włącz uprawnienie lokalizacji',gpsNoSignal:'Brak sygnału lokalizacji',gpsTimeout:'Przekroczono czas oczekiwania',
     openGmaps:'Otwórz Google Maps',longPressCoord:'Przytrzymaj cel na mapie',copyCoordBelow:'Skopiuj wyświetlone współrzędne i wklej poniżej',
+    logout:'🚪 Opuść pokój',logoutConfirm:'Czy na pewno chcesz opuścić pokój?',
   } as any,
   'nl': {
     nameplaceholder:'Voer je naam in',createRoom:'＋ Nieuwe kamer maken',orJoin:'── of neem deel aan een actieve kamer ──',
@@ -487,6 +506,7 @@ const T: Record<Lang, Translations> = {
     micError:'Geen toegang tot microfoon: ',uploadFailed:'Upload mislukt: ',
     gpsPermDenied:'Locatie geweigerd, schakel locatietoestemming in',gpsNoSignal:'Geen locatiesignaal',gpsTimeout:'Locatie time-out',
     openGmaps:'Google Maps openen',longPressCoord:'Houd de bestemming op de kaart ingedrukt',copyCoordBelow:'Kopieer de getoonde coördinaten en plak hieronder',
+    logout:'🚪 Kamer verlaten',logoutConfirm:'Weet je zeker dat je de kamer wilt verlaten?',
   } as any,
   'uk': {
     nameplaceholder:'Введіть ваше ім\'я',createRoom:'＋ Створити кімнату',orJoin:'── або приєднатись до активної ──',
@@ -509,6 +529,7 @@ const T: Record<Lang, Translations> = {
     micError:'Немає доступу до мікрофона: ',uploadFailed:'Помилка завантаження: ',
     gpsPermDenied:'Доступ до місцезнаходження відхилено',gpsNoSignal:'Немає сигналу місцезнаходження',gpsTimeout:'Час очікування вичерпано',
     openGmaps:'Відкрити Google Maps',longPressCoord:'Утримуйте пункт призначення на карті',copyCoordBelow:'Скопіюйте показані координати та вставте нижче',
+    logout:'🚪 Покинути кімнату',logoutConfirm:'Ви впевнені, що хочете покинути кімнату?',
   } as any,
   'ms': {
     nameplaceholder:'Masukkan nama anda',createRoom:'＋ Cipta bilik baru',orJoin:'── atau sertai bilik aktif ──',
@@ -531,6 +552,7 @@ const T: Record<Lang, Translations> = {
     micError:'Tidak dapat akses mikrofon: ',uploadFailed:'Gagal muat naik: ',
     gpsPermDenied:'Lokasi ditolak, aktifkan kebenaran lokasi',gpsNoSignal:'Tiada isyarat lokasi',gpsTimeout:'Masa tamat lokasi',
     openGmaps:'Buka Google Maps',longPressCoord:'Tekan lama destinasi di peta',copyCoordBelow:'Salin koordinat yang dipaparkan di atas dan tampal di bawah',
+    logout:'🚪 Tinggalkan bilik',logoutConfirm:'Adakah anda pasti mahu meninggalkan bilik?',
   } as any,
 };
 
