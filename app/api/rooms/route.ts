@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb, ensureMigrated } from '@/lib/db';
 
 export async function GET() {
+  await ensureMigrated();
   const db = getDb();
   const rows = await db`
     SELECT p.room_id,

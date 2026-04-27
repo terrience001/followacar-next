@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb, ensureMigrated } from '@/lib/db';
 import { randomBytes } from 'crypto';
 
 export async function POST(req: NextRequest) {
+  await ensureMigrated();
   const db = getDb();
   const fd = await req.formData();
   const rawName = (fd.get('name') as string | null)?.trim() ?? '';
