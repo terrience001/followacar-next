@@ -1,7 +1,11 @@
 @import "tailwindcss";
 
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,sans-serif;background:#0f172a;color:#f1f5f9;height:100dvh;display:flex;flex-direction:column}
+html,body{height:100dvh;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html{overflow:hidden}
+body{font-family:-apple-system,sans-serif;background:#0f172a;color:#f1f5f9;display:flex;flex-direction:column;overflow:hidden}
+button,a{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+input,textarea{touch-action:manipulation}
 
 .screen{position:fixed;inset:0;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;z-index:999;padding:2rem}
 .screen h1{font-size:2rem;color:#38bdf8;font-weight:800}
@@ -43,7 +47,7 @@ body{font-family:-apple-system,sans-serif;background:#0f172a;color:#f1f5f9;heigh
 .msg{font-size:.85rem;line-height:1.5;word-break:break-all}
 .msg .who{font-weight:700;margin-right:.4rem}
 #chat-form{display:flex;gap:.5rem;padding:.5rem;border-top:1px solid #334155;flex-shrink:0}
-#chat-input{flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#f1f5f9;padding:.45rem .7rem;font-size:.95rem;outline:none}
+#chat-input{flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#f1f5f9;padding:.45rem .7rem;font-size:16px;outline:none}
 #chat-input:focus{border-color:#38bdf8}
 #chat-send{background:#38bdf8;color:#0f172a;border:none;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;flex-shrink:0}
 
@@ -71,7 +75,7 @@ body{font-family:-apple-system,sans-serif;background:#0f172a;color:#f1f5f9;heigh
 #dest-box{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:1.25rem;width:100%;max-width:380px;display:flex;flex-direction:column;gap:.75rem}
 #dest-box h3{font-size:1rem}
 #dest-box p{font-size:.8rem;color:#94a3b8}
-#dest-url,#dest-name,#dest-coord{background:#0f172a;border:1px solid #334155;border-radius:8px;color:#f1f5f9;padding:.5rem .7rem;font-size:.85rem;width:100%;outline:none}
+#dest-url,#dest-name,#dest-coord{background:#0f172a;border:1px solid #334155;border-radius:8px;color:#f1f5f9;padding:.5rem .7rem;font-size:16px;width:100%;outline:none}
 #dest-url:focus,#dest-name:focus,#dest-coord:focus{border-color:#f59e0b}
 .dest-mode-toggle{display:flex;gap:0;border:1px solid #334155;border-radius:8px;overflow:hidden}
 .dest-mode-btn{flex:1;padding:.4rem;font-size:.8rem;background:transparent;color:#94a3b8;border:none;cursor:pointer}
@@ -85,7 +89,7 @@ body{font-family:-apple-system,sans-serif;background:#0f172a;color:#f1f5f9;heigh
 #create-dialog.open{display:flex}
 #create-box{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:1.25rem;width:100%;max-width:380px;display:flex;flex-direction:column;gap:.75rem}
 #create-box h3{font-size:1rem}
-#create-room-name,#create-user-name{background:#0f172a;border:1px solid #334155;border-radius:8px;color:#f1f5f9;padding:.55rem .75rem;font-size:.9rem;width:100%;outline:none}
+#create-room-name,#create-user-name{background:#0f172a;border:1px solid #334155;border-radius:8px;color:#f1f5f9;padding:.55rem .75rem;font-size:16px;width:100%;outline:none}
 #create-room-name:focus,#create-user-name:focus{border-color:#38bdf8}
 #create-public-row{display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:#f1f5f9;cursor:pointer;user-select:none}
 #create-public-row input{width:16px;height:16px;cursor:pointer;accent-color:#38bdf8}
