@@ -10,7 +10,7 @@ export async function GET() {
 
   try {
     const client = createClient({
-      url: url.replace(/^libsql:\/\//, 'https://'),
+      url: url,
       authToken: token,
     });
     const res = await client.execute('SELECT 1 AS ok');

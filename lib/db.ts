@@ -2,7 +2,7 @@ import { createClient, type InValue } from '@libsql/client';
 
 function createDb() {
   const client = createClient({
-    url: (process.env.TURSO_URL ?? '').replace(/^libsql:\/\//, 'https://'),
+    url: (process.env.TURSO_URL ?? ''),
     authToken: process.env.TURSO_TOKEN ?? '',
   });
 
@@ -26,7 +26,7 @@ let schemaPromise: Promise<void> | null = null;
 export function ensureMigrated(): Promise<void> {
   if (schemaPromise) return schemaPromise;
   const client = createClient({
-    url: (process.env.TURSO_URL ?? '').replace(/^libsql:\/\//, 'https://'),
+    url: (process.env.TURSO_URL ?? ''),
     authToken: process.env.TURSO_TOKEN ?? '',
   });
   schemaPromise = client.batch([

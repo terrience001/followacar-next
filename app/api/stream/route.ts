@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   if (!room) return new Response('missing room', { status: 400 });
 
   const client = createClient({
-    url: (process.env.TURSO_URL ?? '').replace(/^libsql:\/\//, 'https://'),
+    url: (process.env.TURSO_URL ?? ''),
     authToken: process.env.TURSO_TOKEN ?? '',
   });
 
