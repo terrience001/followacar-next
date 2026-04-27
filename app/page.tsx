@@ -501,13 +501,6 @@ function bootApp(lang: Lang) {
     el('chat-send').addEventListener('click',sendMsg);
   }
   function sendMsg(){const input=el<HTMLInputElement>('chat-input');if((input as any).composing)return;const text=input.value.trim();if(!text)return;input.value='';const fd=new FormData();fd.append('room',ROOM);fd.append('name',ME);fd.append('content',text);fetch('/api/message',{method:'POST',body:fd});}
-  function pollMessages(){
-    fetch(`/api/message?room=${encodeURIComponent(ROOM)}&since=${lastMsgId}`).then(r=>r.json()).then((msgs: any[])=>{
-      if(!msgs.length)return;const box=el('chat-msgs');
-      msgs.forEach(m=>{lastMsgId=Math.max(lastMsgId,parseInt(m.id));const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${escHtml(m.content)}`;box.appendChild(div);});
-      box.scrollTop=box.scrollHeight;
-    });
-  }
 
   document.querySelectorAll('.tab').forEach(t=>{
     (t as HTMLElement).onclick=()=>{
@@ -548,8 +541,7 @@ function bootApp(lang: Lang) {
     inCall=true;muted=false;el('group-call-btn').textContent=tr('leaveVoice','📵 Leave voice');el('group-call-btn').classList.add('in-call');
     el('mute-btn').style.display='inline-block';el('mute-btn').textContent=tr('mute','🎙 Mute');el('mute-btn').classList.remove('muted');
     el('stream-btn').style.display='inline-block';el('screen-btn').style.display='inline-block';updateStreamUI();
-    const res=await fetch(`/api/location?room=${encodeURIComponent(ROOM)}`).then(r=>r.json());
-    res.filter((p: any)=>p.name!==ME).forEach((p: any)=>callPeer(p.name));
+    lastMemberList.filter((p: any)=>p.name!==ME&&isOnline(p.ts)).forEach((p: any)=>callPeer(p.name));
     broadcastSignal(JSON.stringify({type:'call-join'}));voiceStatus[ME]={inCall:true,muted:false};updateMembersVoice();
   }
   function leaveGroupCall(){
@@ -636,15 +628,31 @@ function bootApp(lang: Lang) {
   function broadcastSignal(data: string){const fd=new FormData();fd.append('room',ROOM);fd.append('from',ME);fd.append('to','*');fd.append('data',data);fetch('/api/signal',{method:'POST',body:fd});}
 
   function startPolling(){
-    pollMessages();setInterval(pollMessages,2000);
-    fetch(`/api/location?room=${encodeURIComponent(ROOM)}`).then(r=>r.json()).then(updateMarkers);
-    setInterval(()=>fetch(`/api/location?room=${encodeURIComponent(ROOM)}`).then(r=>r.json()).then(updateMarkers),4000);
-    setInterval(pollSignals,1500);
-    fetch(`/api/destination?room=${encodeURIComponent(ROOM)}`).then(r=>r.json()).then(updateDestination);
-    setInterval(()=>fetch(`/api/destination?room=${encodeURIComponent(ROOM)}`).then(r=>r.json()).then(updateDestination),5000);
-    restoreMyAvatar();loadAvatars();setInterval(loadAvatars,30000);
+    restoreMyAvatar();loadAvatars();
+    let timer: any=null;
+    async function syncOnce(){
+      if(!ROOM)return;
+      const url=`/api/sync?room=${encodeURIComponent(ROOM)}&me=${encodeURIComponent(ME)}&since_msg=${lastMsgId}&since_sig=${lastSigId}`;
+      const res=await fetch(url).then(r=>r.json()).catch(()=>null);
+      if(!res||res.ok===false)return;
+      if(res.messages?.length){
+        const box=el('chat-msgs');
+        res.messages.forEach((m: any)=>{lastMsgId=Math.max(lastMsgId,parseInt(m.id));const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${escHtml(m.content)}`;box.appendChild(div);});
+        box.scrollTop=box.scrollHeight;
+      }
+      if(res.locations)updateMarkers(res.locations);
+      if(res.signals?.length)res.signals.forEach((s: any)=>{lastSigId=Math.max(lastSigId,parseInt(s.id));handleSignal(s);});
+      updateDestination(res.destination);
+    }
+    function scheduleNext(){
+      const delay=document.visibilityState==='hidden'?30000:2000;
+      timer=setTimeout(async()=>{try{await syncOnce();}catch(e){}scheduleNext();},delay);
+    }
+    syncOnce().catch(()=>{}).finally(scheduleNext);
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='visible'){clearTimeout(timer);syncOnce().catch(()=>{}).finally(scheduleNext);}
+    });
   }
-  function pollSignals(){fetch(`/api/signal?room=${encodeURIComponent(ROOM)}&me=${encodeURIComponent(ME)}&since=${lastSigId}`).then(r=>r.json()).then((sigs: any[])=>{sigs.forEach(s=>{lastSigId=Math.max(lastSigId,parseInt(s.id));handleSignal(s);});});}
 }
 
 // Make i18n available to bootApp via window
