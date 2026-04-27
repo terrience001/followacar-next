@@ -8,11 +8,11 @@ export async function GET() {
     SELECT p.room_id,
            r.name AS room_name,
            COUNT(DISTINCT p.name) AS cnt,
-           STRING_AGG(DISTINCT p.name, ', ' ORDER BY p.name) AS names
+           GROUP_CONCAT(p.name) AS names
     FROM participants p
     JOIN rooms r ON r.id = p.room_id
-    WHERE p.updated_at > NOW() - INTERVAL '30 minutes'
-      AND r.is_public = TRUE
+    WHERE p.updated_at > datetime('now', '-30 minutes')
+      AND r.is_public = 1
     GROUP BY p.room_id, r.name
     ORDER BY MAX(p.updated_at) DESC
     LIMIT 10

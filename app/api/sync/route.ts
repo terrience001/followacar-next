@@ -21,10 +21,10 @@ export async function GET(req: NextRequest) {
       ORDER BY id ASC LIMIT 50
     `,
     db`
-      SELECT name, lat, lng, EXTRACT(EPOCH FROM updated_at)::bigint AS ts
+      SELECT name, lat, lng, CAST(strftime('%s', updated_at) AS INTEGER) AS ts
       FROM participants
       WHERE room_id = ${room}
-        AND updated_at > NOW() - INTERVAL '30 minutes'
+        AND updated_at > datetime('now', '-30 minutes')
       ORDER BY name
     `,
     me
@@ -41,8 +41,8 @@ export async function GET(req: NextRequest) {
   if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
     lastCleanup = now;
     Promise.all([
-      db`DELETE FROM signals WHERE created_at < NOW() - INTERVAL '60 seconds'`,
-      db`DELETE FROM messages WHERE created_at < NOW() - INTERVAL '7 days'`,
+      db`DELETE FROM signals WHERE created_at < datetime('now', '-60 seconds')`,
+      db`DELETE FROM messages WHERE created_at < datetime('now', '-7 days')`,
     ]).catch(() => {});
   }
 

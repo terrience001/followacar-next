@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: '座標格式不正確' });
     await db`
       INSERT INTO destination (room_id, lat, lng, label) VALUES (${room}, ${lat}, ${lng}, ${label})
-      ON CONFLICT (room_id) DO UPDATE SET lat = EXCLUDED.lat, lng = EXCLUDED.lng, label = EXCLUDED.label, updated_at = NOW()
+      ON CONFLICT (room_id) DO UPDATE SET lat = excluded.lat, lng = excluded.lng, label = excluded.label, updated_at = datetime('now')
     `;
     return NextResponse.json({ ok: true, lat, lng });
   }
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   await db`
     INSERT INTO destination (room_id, lat, lng, label) VALUES (${room}, ${parsedLat.lat}, ${parsedLat.lng}, ${label})
-    ON CONFLICT (room_id) DO UPDATE SET lat = EXCLUDED.lat, lng = EXCLUDED.lng, label = EXCLUDED.label, updated_at = NOW()
+    ON CONFLICT (room_id) DO UPDATE SET lat = excluded.lat, lng = excluded.lng, label = excluded.label, updated_at = datetime('now')
   `;
   return NextResponse.json({ ok: true, lat: parsedLat.lat, lng: parsedLat.lng });
 }

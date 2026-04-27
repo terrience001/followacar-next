@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
   if (img.length > 10000)
     return NextResponse.json({ ok: false, error: 'image too large' });
   await db`
-    INSERT INTO avatars (name, data) VALUES (${name}, ${img})
-    ON CONFLICT (name) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
+    INSERT INTO avatars (name, data, updated_at) VALUES (${name}, ${img}, datetime('now'))
+    ON CONFLICT (name) DO UPDATE SET data = excluded.data, updated_at = datetime('now')
   `;
   return NextResponse.json({ ok: true });
 }
@@ -25,9 +25,9 @@ export async function GET(req: NextRequest) {
   const rows = await db`
     SELECT a.name, a.data FROM avatars a
     INNER JOIN participants p ON p.name = a.name AND p.room_id = ${room}
-    WHERE p.updated_at > NOW() - INTERVAL '2 hours'
+    WHERE p.updated_at > datetime('now', '-2 hours')
   `;
   const out: Record<string, string> = {};
-  for (const r of rows) out[r.name] = r.data;
+  for (const r of rows) out[r.name as string] = r.data as string;
   return NextResponse.json(out);
 }

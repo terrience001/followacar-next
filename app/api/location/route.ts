@@ -11,10 +11,10 @@ export async function POST(req: NextRequest) {
   if (!room || !name || isNaN(+lat) || isNaN(+lng))
     return NextResponse.json({ ok: false });
   await db`
-    INSERT INTO participants (room_id, name, lat, lng)
-    VALUES (${room}, ${name}, ${lat}, ${lng})
+    INSERT INTO participants (room_id, name, lat, lng, updated_at)
+    VALUES (${room}, ${name}, ${lat}, ${lng}, datetime('now'))
     ON CONFLICT (room_id, name)
-    DO UPDATE SET lat = EXCLUDED.lat, lng = EXCLUDED.lng, updated_at = NOW()
+    DO UPDATE SET lat = excluded.lat, lng = excluded.lng, updated_at = datetime('now')
   `;
   return NextResponse.json({ ok: true });
 }
@@ -24,10 +24,10 @@ export async function GET(req: NextRequest) {
   const room = (req.nextUrl.searchParams.get('room') ?? '').trim();
   if (!room) return NextResponse.json([]);
   const rows = await db`
-    SELECT name, lat, lng, EXTRACT(EPOCH FROM updated_at)::bigint AS ts
+    SELECT name, lat, lng, CAST(strftime('%s', updated_at) AS INTEGER) AS ts
     FROM participants
     WHERE room_id = ${room}
-      AND updated_at > NOW() - INTERVAL '30 minutes'
+      AND updated_at > datetime('now', '-30 minutes')
     ORDER BY name
   `;
   return NextResponse.json(rows);

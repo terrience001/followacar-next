@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
-import { neon } from '@neondatabase/serverless';
+import { createClient } from '@libsql/client/web';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 const POLL_MS = 1000;
@@ -17,7 +16,11 @@ export async function GET(req: NextRequest) {
 
   if (!room) return new Response('missing room', { status: 400 });
 
-  const db = neon(process.env.DATABASE_URL!);
+  const client = createClient({
+    url: (process.env.TURSO_URL ?? '').replace(/^libsql:\/\//, 'https://'),
+    authToken: process.env.TURSO_TOKEN ?? '',
+  });
+
   const encoder = new TextEncoder();
   const startedAt = Date.now();
 
@@ -46,50 +49,54 @@ export async function GET(req: NextRequest) {
 
       while (!closed && Date.now() - startedAt < MAX_DURATION_MS) {
         try {
-          const [messages, locations, signals, destinationRows] = await Promise.all([
-            db`
-              SELECT id, name, content FROM messages
-              WHERE room_id = ${room} AND id > ${lastMsgId}
-              ORDER BY id ASC LIMIT 50
-            `,
-            db`
-              SELECT name, lat, lng, EXTRACT(EPOCH FROM updated_at)::bigint AS ts
-              FROM participants
-              WHERE room_id = ${room}
-                AND updated_at > NOW() - INTERVAL '30 minutes'
-              ORDER BY name
-            `,
+          const [msgRes, locRes, sigRes, destRes] = await Promise.all([
+            client.execute({
+              sql: `SELECT id, name, content FROM messages WHERE room_id = ? AND id > ? ORDER BY id ASC LIMIT 50`,
+              args: [room, lastMsgId],
+            }),
+            client.execute({
+              sql: `SELECT name, lat, lng, CAST(strftime('%s', updated_at) AS INTEGER) AS ts
+                    FROM participants WHERE room_id = ? AND updated_at > datetime('now', '-30 minutes') ORDER BY name`,
+              args: [room],
+            }),
             me
-              ? db`
-                  SELECT id, from_name, data FROM signals
-                  WHERE room_id = ${room} AND to_name = ${me} AND id > ${lastSigId}
-                  ORDER BY id ASC
-                `
-              : Promise.resolve([] as Record<string, unknown>[]),
-            db`SELECT lat, lng, label FROM destination WHERE room_id = ${room}`,
+              ? client.execute({
+                  sql: `SELECT id, from_name, data FROM signals WHERE room_id = ? AND to_name = ? AND id > ? ORDER BY id ASC`,
+                  args: [room, me, lastSigId],
+                })
+              : Promise.resolve({ rows: [] }),
+            client.execute({
+              sql: `SELECT lat, lng, label FROM destination WHERE room_id = ?`,
+              args: [room],
+            }),
           ]);
 
+          const messages = msgRes.rows;
+          const locations = locRes.rows;
+          const signals = sigRes.rows;
+          const destinationRows = destRes.rows;
+
           if (messages.length) {
-            for (const m of messages as { id: number }[]) {
+            for (const m of messages as unknown as { id: number }[]) {
               if (m.id > lastMsgId) lastMsgId = m.id;
             }
             send('messages', messages);
           }
           if (signals.length) {
-            for (const s of signals as { id: number }[]) {
+            for (const s of signals as unknown as { id: number }[]) {
               if (s.id > lastSigId) lastSigId = s.id;
             }
             send('signals', signals);
           }
 
-          const locKey = (locations as { name: string; lat: string; lng: string; ts: number }[])
+          const locKey = (locations as unknown as { name: string; lat: string; lng: string; ts: number }[])
             .map(p => `${p.name}:${p.lat},${p.lng}:${p.ts}`).join('|');
           if (locKey !== lastLocKey) {
             lastLocKey = locKey;
             send('locations', locations);
           }
 
-          const dest = (destinationRows as Record<string, unknown>[])[0] ?? null;
+          const dest = (destinationRows as unknown as Record<string, unknown>[])[0] ?? null;
           const destKey = dest ? `${dest.lat},${dest.lng}:${dest.label}` : '';
           if (destKey !== lastDestKey) {
             lastDestKey = destKey;
@@ -101,7 +108,6 @@ export async function GET(req: NextRequest) {
             lastKeepalive = Date.now();
           }
         } catch {
-          // network or db error — break, client will reconnect
           break;
         }
 

@@ -10,16 +10,16 @@ export async function POST(req: NextRequest) {
   const sig  = data.get('data') as string ?? '';
   if (!room || !from || !to || !sig) return NextResponse.json({ ok: false });
 
-  await db`DELETE FROM signals WHERE created_at < NOW() - INTERVAL '60 seconds'`;
+  await db`DELETE FROM signals WHERE created_at < datetime('now', '-60 seconds')`;
 
   if (to === '*') {
     const active = await db`
       SELECT name FROM participants
       WHERE room_id = ${room} AND name != ${from}
-        AND updated_at > NOW() - INTERVAL '30 minutes'
+        AND updated_at > datetime('now', '-30 minutes')
     `;
     await Promise.all(active.map(r =>
-      db`INSERT INTO signals (room_id, from_name, to_name, data) VALUES (${room}, ${from}, ${r.name}, ${sig})`
+      db`INSERT INTO signals (room_id, from_name, to_name, data) VALUES (${room}, ${from}, ${r.name as string}, ${sig})`
     ));
   } else {
     await db`INSERT INTO signals (room_id, from_name, to_name, data) VALUES (${room}, ${from}, ${to}, ${sig})`;
