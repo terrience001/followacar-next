@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@libsql/client/web';
+import { createClient } from '@libsql/client';
 
 export const dynamic = 'force-dynamic';
 
