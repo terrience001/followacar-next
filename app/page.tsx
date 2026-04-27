@@ -641,29 +641,27 @@ function bootApp(lang: Lang) {
 
   function startPolling(){
     restoreMyAvatar();loadAvatars();
-    let timer: any=null;
-    async function syncOnce(){
+    let es: EventSource|null=null,reconnectTimer: any=null;
+    function applyMessages(list: any[]){
+      if(!list?.length)return;const box=el('chat-msgs');
+      list.forEach(m=>{const id=parseInt(m.id);if(id<=lastMsgId)return;lastMsgId=id;const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${escHtml(m.content)}`;box.appendChild(div);});
+      box.scrollTop=box.scrollHeight;
+    }
+    function applySignals(list: any[]){if(!list?.length)return;list.forEach(s=>{const id=parseInt(s.id);if(id<=lastSigId)return;lastSigId=id;handleSignal(s);});}
+    function closeStream(){if(es){try{es.close();}catch{}es=null;}}
+    function openStream(){
+      closeStream();clearTimeout(reconnectTimer);
       if(!ROOM)return;
-      const url=`/api/sync?room=${encodeURIComponent(ROOM)}&me=${encodeURIComponent(ME)}&since_msg=${lastMsgId}&since_sig=${lastSigId}`;
-      const res=await fetch(url).then(r=>r.json()).catch(()=>null);
-      if(!res||res.ok===false)return;
-      if(res.messages?.length){
-        const box=el('chat-msgs');
-        res.messages.forEach((m: any)=>{lastMsgId=Math.max(lastMsgId,parseInt(m.id));const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${escHtml(m.content)}`;box.appendChild(div);});
-        box.scrollTop=box.scrollHeight;
-      }
-      if(res.locations)updateMarkers(res.locations);
-      if(res.signals?.length)res.signals.forEach((s: any)=>{lastSigId=Math.max(lastSigId,parseInt(s.id));handleSignal(s);});
-      updateDestination(res.destination);
+      const url=`/api/stream?room=${encodeURIComponent(ROOM)}&me=${encodeURIComponent(ME)}&since_msg=${lastMsgId}&since_sig=${lastSigId}`;
+      es=new EventSource(url);
+      es.addEventListener('messages',e=>applyMessages(JSON.parse((e as MessageEvent).data)));
+      es.addEventListener('signals',e=>applySignals(JSON.parse((e as MessageEvent).data)));
+      es.addEventListener('locations',e=>updateMarkers(JSON.parse((e as MessageEvent).data)));
+      es.addEventListener('destination',e=>updateDestination(JSON.parse((e as MessageEvent).data)));
+      es.onerror=()=>{closeStream();reconnectTimer=setTimeout(openStream,2000);};
     }
-    function scheduleNext(){
-      const delay=document.visibilityState==='hidden'?30000:2000;
-      timer=setTimeout(async()=>{try{await syncOnce();}catch(e){}scheduleNext();},delay);
-    }
-    syncOnce().catch(()=>{}).finally(scheduleNext);
-    document.addEventListener('visibilitychange',()=>{
-      if(document.visibilityState==='visible'){clearTimeout(timer);syncOnce().catch(()=>{}).finally(scheduleNext);}
-    });
+    openStream();
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')openStream();});
   }
 }
 
