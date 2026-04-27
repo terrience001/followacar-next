@@ -151,6 +151,25 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Create-room dialog */}
+      <div id="create-dialog">
+        <div id="create-box">
+          <h3>{t.createRoomTitle}</h3>
+          <input id="create-room-name" maxLength={50} placeholder={t.roomNamePlaceholder} autoComplete="off" autoCorrect="off" spellCheck={false} />
+          <input id="create-user-name" maxLength={20} placeholder={t.yourName} autoComplete="off" autoCorrect="off" spellCheck={false} />
+          <label id="create-public-row">
+            <input type="checkbox" id="create-is-public" defaultChecked />
+            <span>{t.publicRoomLabel}</span>
+          </label>
+          <p id="create-public-hint">{t.publicRoomHint}</p>
+          <p id="create-err"></p>
+          <div className="dest-dialog-btns">
+            <button id="create-confirm">{t.create}</button>
+            <button id="create-cancel">{t.cancel}</button>
+          </div>
+        </div>
+      </div>
+
       {/* Dest dialog */}
       <div id="dest-dialog">
         <div id="dest-box">
@@ -264,19 +283,44 @@ function bootApp(lang: Lang) {
       box.innerHTML='';
       rooms.forEach(r=>{
         const card=document.createElement('div');card.className='room-card';
-        card.innerHTML=`<div><div class="rcode">${escHtml(r.room_id)}</div><div class="rnames">${escHtml(r.names)}</div></div><div class="rcnt">${r.cnt} 人</div>`;
+        const title=r.room_name?escHtml(r.room_name):escHtml(r.room_id);
+        const sub=r.room_name?`${escHtml(r.room_id)} · ${escHtml(r.names)}`:escHtml(r.names);
+        card.innerHTML=`<div><div class="rcode">${title}</div><div class="rnames">${sub}</div></div><div class="rcnt">${r.cnt} 人</div>`;
         card.onclick=()=>{const name=requireName();if(!name)return;ME=name;ROOM=r.room_id;saveSession(ROOM,ME);enterApp();};
         box.appendChild(card);
       });
     }).catch(()=>{el('active-rooms').innerHTML=`<span style="font-size:.8rem;color:#4b5563">${tr('loadFailed','Failed to load rooms')}</span>`;});
   }
 
-  el('btn-create').onclick=async()=>{
-    const name=requireName();if(!name)return;
-    const res=await fetch('/api/room',{method:'POST'}).then(r=>r.json());
-    if(!res.ok)return;ME=name;ROOM=res.room;
+  function openCreateDialog(){
+    el<HTMLInputElement>('create-room-name').value='';
+    el<HTMLInputElement>('create-user-name').value=el<HTMLInputElement>('name-input-home').value.trim();
+    el<HTMLInputElement>('create-is-public').checked=true;
+    el('create-err').style.display='none';el('home-err').style.display='none';
+    el('create-dialog').classList.add('open');
+    setTimeout(()=>el('create-room-name').focus(),50);
+  }
+  function closeCreateDialog(){el('create-dialog').classList.remove('open');}
+  el('btn-create').onclick=openCreateDialog;
+  el('create-cancel').onclick=closeCreateDialog;
+  el('create-dialog').onclick=(e: MouseEvent)=>{if(e.target===el('create-dialog'))closeCreateDialog();};
+  el('create-room-name').addEventListener('keydown',(e: KeyboardEvent)=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();el('create-user-name').focus();}});
+  el('create-user-name').addEventListener('keydown',(e: KeyboardEvent)=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();(el('create-confirm') as HTMLButtonElement).click();}});
+  el('create-confirm').onclick=async()=>{
+    const errEl=el('create-err');errEl.style.display='none';
+    const myName=el<HTMLInputElement>('create-user-name').value.trim();
+    if(!myName){errEl.textContent=tr('enterNameFirst','Please enter your name first');errEl.style.display='';el('create-user-name').focus();return;}
+    const roomName=el<HTMLInputElement>('create-room-name').value.trim();
+    const isPublic=el<HTMLInputElement>('create-is-public').checked;
+    const btn=el<HTMLButtonElement>('create-confirm');const original=btn.textContent;
+    btn.disabled=true;btn.textContent=tr('saving','Saving…');
+    const fd=new FormData();fd.append('name',roomName);fd.append('is_public',isPublic?'true':'false');
+    const res=await fetch('/api/room',{method:'POST',body:fd}).then(r=>r.json()).catch(()=>({ok:false}));
+    btn.disabled=false;btn.textContent=original;
+    if(!res.ok){errEl.textContent=tr('loadFailed','Failed to load rooms');errEl.style.display='';return;}
+    ME=myName;ROOM=res.room;
     el('share-link').textContent=location.origin+'/?room='+ROOM;
-    hide('screen-home');show('screen-created');
+    closeCreateDialog();hide('screen-home');show('screen-created');
   };
   el('copy-btn').onclick=()=>{
     navigator.clipboard.writeText(el('share-link').textContent||'');

@@ -92,6 +92,11 @@ type Translations = {
   logout: string;
   logoutConfirm: string;
   flipCamera: string;
+  createRoomTitle: string;
+  roomNamePlaceholder: string;
+  publicRoomLabel: string;
+  publicRoomHint: string;
+  create: string;
 };
 
 const T: Record<Lang, Translations> = {
@@ -118,6 +123,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'點此開啟 Google Maps',longPressCoord:'長按地圖上的目的地標記',copyCoordBelow:'複製畫面頂部顯示的座標填入下方',
     logout:'🚪 離開房間',logoutConfirm:'確定要離開房間嗎？',
     flipCamera:'🔄 切換鏡頭',
+    createRoomTitle:'＋ 建立新房間',roomNamePlaceholder:'房間名稱（顯示給隊友）',publicRoomLabel:'公開房間',publicRoomHint:'私密：不會顯示在首頁',create:'建立',
   },
   'en': {
     nameplaceholder:'Enter your name',createRoom:'＋ Create New Room',orJoin:'── or join an active room ──',
@@ -142,6 +148,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Open Google Maps',longPressCoord:'Long-press the destination on the map',copyCoordBelow:'Copy the coordinates shown at the top and paste below',
     logout:'🚪 Leave room',logoutConfirm:'Are you sure you want to leave the room?',
     flipCamera:'🔄 Flip camera',
+    createRoomTitle:'＋ Create New Room',roomNamePlaceholder:'Room name (shown to teammates)',publicRoomLabel:'Public room',publicRoomHint:'Private rooms are hidden from the home page',create:'Create',
   },
   'ja': {
     nameprintf:'名前を入力してください',nameplaceholder:'名前を入力してください',createRoom:'＋ 新しいルームを作成',orJoin:'── またはアクティブなルームに参加 ──',
@@ -166,6 +173,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Google Mapsを開く',longPressCoord:'地図上の目的地を長押し',copyCoordBelow:'上部に表示された座標をコピーして下に貼り付け',
     logout:'🚪 ルームを退出',logoutConfirm:'ルームを退出してもよろしいですか？',
     flipCamera:'🔄 カメラ切替',
+    createRoomTitle:'＋ 新しいルームを作成',roomNamePlaceholder:'ルーム名（メンバーに表示）',publicRoomLabel:'公開ルーム',publicRoomHint:'非公開：ホーム画面に表示されません',create:'作成',
   } as any,
   'ko': {
     nameplaceholder:'이름을 입력하세요',createRoom:'＋ 새 방 만들기',orJoin:'── 또는 활성 방에 참여 ──',
@@ -190,6 +198,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Google Maps 열기',longPressCoord:'지도에서 목적지를 길게 누르기',copyCoordBelow:'상단에 표시된 좌표를 복사해 아래에 붙여넣기',
     logout:'🚪 방 나가기',logoutConfirm:'방을 나가시겠습니까?',
     flipCamera:'🔄 카메라 전환',
+    createRoomTitle:'＋ 새 방 만들기',roomNamePlaceholder:'방 이름 (팀원에게 표시)',publicRoomLabel:'공개 방',publicRoomHint:'비공개: 홈 화면에 표시되지 않음',create:'만들기',
   } as any,
   'es': {
     nameplaceholder:'Ingresa tu nombre',createRoom:'＋ Crear nueva sala',orJoin:'── o únete a una sala activa ──',
@@ -214,6 +223,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Abrir Google Maps',longPressCoord:'Mantén presionado el destino en el mapa',copyCoordBelow:'Copia las coordenadas mostradas arriba y pégalas abajo',
     logout:'🚪 Salir de la sala',logoutConfirm:'¿Seguro que quieres salir de la sala?',
     flipCamera:'🔄 Cambiar cámara',
+    createRoomTitle:'＋ Crear nueva sala',roomNamePlaceholder:'Nombre de la sala (visible para el equipo)',publicRoomLabel:'Sala pública',publicRoomHint:'Privada: no se mostrará en la página de inicio',create:'Crear',
   } as any,
   'fr': {
     nameplaceholder:'Entrez votre nom',createRoom:'＋ Créer une salle',orJoin:'── ou rejoindre une salle active ──',
@@ -238,6 +248,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Ouvrir Google Maps',longPressCoord:'Appuyez longuement sur la destination sur la carte',copyCoordBelow:'Copiez les coordonnées affichées en haut et collez-les ci-dessous',
     logout:'🚪 Quitter la salle',logoutConfirm:'Voulez-vous vraiment quitter la salle ?',
     flipCamera:'🔄 Changer caméra',
+    createRoomTitle:'＋ Créer une salle',roomNamePlaceholder:'Nom de la salle (visible par l\'équipe)',publicRoomLabel:'Salle publique',publicRoomHint:'Privée : non affichée sur l\'accueil',create:'Créer',
   } as any,
   'de': {
     nameplaceholder:'Name eingeben',createRoom:'＋ Neuen Raum erstellen',orJoin:'── oder aktivem Raum beitreten ──',
@@ -262,6 +273,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Google Maps öffnen',longPressCoord:'Ziel auf der Karte gedrückt halten',copyCoordBelow:'Oben angezeigte Koordinaten kopieren und unten einfügen',
     logout:'🚪 Raum verlassen',logoutConfirm:'Raum wirklich verlassen?',
     flipCamera:'🔄 Kamera wechseln',
+    createRoomTitle:'＋ Neuen Raum erstellen',roomNamePlaceholder:'Raumname (für Teammitglieder sichtbar)',publicRoomLabel:'Öffentlicher Raum',publicRoomHint:'Privat: nicht auf der Startseite sichtbar',create:'Erstellen',
   } as any,
   'pt': {
     nameplaceholder:'Digite seu nome',createRoom:'＋ Criar nova sala',orJoin:'── ou entre em uma sala ativa ──',
@@ -286,6 +298,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Abrir Google Maps',longPressCoord:'Pressione por no destino no mapa',copyCoordBelow:'Copie as coordenadas exibidas acima e cole abaixo',
     logout:'🚪 Sair da sala',logoutConfirm:'Tem certeza que quer sair da sala?',
     flipCamera:'🔄 Trocar câmera',
+    createRoomTitle:'＋ Criar nova sala',roomNamePlaceholder:'Nome da sala (visível para a equipe)',publicRoomLabel:'Sala pública',publicRoomHint:'Privada: não aparece na página inicial',create:'Criar',
   } as any,
   'ar': {
     nameplaceholder:'أدخل اسمك',createRoom:'＋ إنشاء غرفة جديدة',orJoin:'── أو انضم إلى غرفة نشطة ──',
@@ -310,6 +323,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'فتح خرائط Google',longPressCoord:'اضغط مطولاً على الوجهة في الخريطة',copyCoordBelow:'انسخ الإحداثيات المعروضة أعلاه والصقها أدناه',
     logout:'🚪 مغادرة الغرفة',logoutConfirm:'هل أنت متأكد من مغادرة الغرفة؟',
     flipCamera:'🔄 تبديل الكاميرا',
+    createRoomTitle:'＋ إنشاء غرفة جديدة',roomNamePlaceholder:'اسم الغرفة (يظهر لزملاء الفريق)',publicRoomLabel:'غرفة عامة',publicRoomHint:'خاصة: لن تظهر في الصفحة الرئيسية',create:'إنشاء',
   } as any,
   'hi': {
     nameplaceholder:'अपना नाम दर्ज करें',createRoom:'＋ नया रूम बनाएं',orJoin:'── या किसी सक्रिय रूम में शामिल हों ──',
@@ -334,6 +348,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Google Maps खोलें',longPressCoord:'मानचित्र पर गंतव्य को देर तक दबाएं',copyCoordBelow:'ऊपर दिखाए गए कोऑर्डिनेट कॉपी करें और नीचे पेस्ट करें',
     logout:'🚪 रूम छोड़ें',logoutConfirm:'क्या आप वाकई रूम छोड़ना चाहते हैं?',
     flipCamera:'🔄 कैमरा बदलें',
+    createRoomTitle:'＋ नया रूम बनाएं',roomNamePlaceholder:'रूम का नाम (साथियों को दिखेगा)',publicRoomLabel:'सार्वजनिक रूम',publicRoomHint:'निजी: होम पेज पर नहीं दिखेगा',create:'बनाएं',
   } as any,
   'it': {
     nameplaceholder:'Inserisci il tuo nome',createRoom:'＋ Crea nuova stanza',orJoin:'── o unisciti a una stanza attiva ──',
@@ -358,6 +373,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Apri Google Maps',longPressCoord:'Tieni premuto la destinazione sulla mappa',copyCoordBelow:'Copia le coordinate mostrate in alto e incollale sotto',
     logout:'🚪 Esci dalla stanza',logoutConfirm:'Sei sicuro di voler uscire dalla stanza?',
     flipCamera:'🔄 Cambia fotocamera',
+    createRoomTitle:'＋ Crea nuova stanza',roomNamePlaceholder:'Nome stanza (visibile ai compagni)',publicRoomLabel:'Stanza pubblica',publicRoomHint:'Privata: non mostrata nella home',create:'Crea',
   } as any,
   'ru': {
     nameplaceholder:'Введите ваше имя',createRoom:'＋ Создать комнату',orJoin:'── или войти в активную комнату ──',
@@ -382,6 +398,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Открыть Google Maps',longPressCoord:'Удерживайте место назначения на карте',copyCoordBelow:'Скопируйте показанные координаты и вставьте ниже',
     logout:'🚪 Покинуть комнату',logoutConfirm:'Вы уверены, что хотите покинуть комнату?',
     flipCamera:'🔄 Переключить камеру',
+    createRoomTitle:'＋ Создать комнату',roomNamePlaceholder:'Название комнаты (видно команде)',publicRoomLabel:'Публичная комната',publicRoomHint:'Приватная: не отображается на главной',create:'Создать',
   } as any,
   'th': {
     nameplaceholder:'ใส่ชื่อของคุณ',createRoom:'＋ สร้างห้องใหม่',orJoin:'── หรือเข้าร่วมห้องที่เปิดอยู่ ──',
@@ -406,6 +423,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'เปิด Google Maps',longPressCoord:'กดค้างที่จุดหมายบนแผนที่',copyCoordBelow:'คัดลอกพิกัดที่แสดงด้านบนแล้ววางด้านล่าง',
     logout:'🚪 ออกจากห้อง',logoutConfirm:'แน่ใจหรือว่าต้องการออกจากห้อง?',
     flipCamera:'🔄 สลับกล้อง',
+    createRoomTitle:'＋ สร้างห้องใหม่',roomNamePlaceholder:'ชื่อห้อง (แสดงให้ทีมเห็น)',publicRoomLabel:'ห้องสาธารณะ',publicRoomHint:'ส่วนตัว: จะไม่แสดงในหน้าแรก',create:'สร้าง',
   } as any,
   'vi': {
     nameplaceholder:'Nhập tên của bạn',createRoom:'＋ Tạo phòng mới',orJoin:'── hoặc tham gia phòng đang mở ──',
@@ -430,6 +448,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Mở Google Maps',longPressCoord:'Nhấn giữ điểm đến trên bản đồ',copyCoordBelow:'Sao chép tọa độ hiển thị ở trên và dán bên dưới',
     logout:'🚪 Rời phòng',logoutConfirm:'Bạn chắc chắn muốn rời phòng?',
     flipCamera:'🔄 Đổi camera',
+    createRoomTitle:'＋ Tạo phòng mới',roomNamePlaceholder:'Tên phòng (hiển thị cho đồng đội)',publicRoomLabel:'Phòng công khai',publicRoomHint:'Riêng tư: sẽ không hiển thị trên trang chủ',create:'Tạo',
   } as any,
   'id': {
     nameplaceholder:'Masukkan nama Anda',createRoom:'＋ Buat ruangan baru',orJoin:'── atau bergabung ruangan aktif ──',
@@ -454,6 +473,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Buka Google Maps',longPressCoord:'Tekan lama tujuan di peta',copyCoordBelow:'Salin koordinat yang ditampilkan di atas dan tempel di bawah',
     logout:'🚪 Keluar ruangan',logoutConfirm:'Yakin ingin keluar dari ruangan?',
     flipCamera:'🔄 Ganti kamera',
+    createRoomTitle:'＋ Buat ruangan baru',roomNamePlaceholder:'Nama ruangan (terlihat bagi tim)',publicRoomLabel:'Ruangan publik',publicRoomHint:'Pribadi: tidak ditampilkan di beranda',create:'Buat',
   } as any,
   'tr': {
     nameplaceholder:'Adınızı girin',createRoom:'＋ Yeni oda oluştur',orJoin:'── veya aktif bir odaya katıl ──',
@@ -478,6 +498,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Google Maps\'i aç',longPressCoord:'Haritada hedefe uzun basın',copyCoordBelow:'Üstte gösterilen koordinatları kopyalayıp aşağıya yapıştırın',
     logout:'🚪 Odadan çık',logoutConfirm:'Odadan çıkmak istediğinize emin misiniz?',
     flipCamera:'🔄 Kamera değiştir',
+    createRoomTitle:'＋ Yeni oda oluştur',roomNamePlaceholder:'Oda adı (ekip üyelerine görünür)',publicRoomLabel:'Açık oda',publicRoomHint:'Özel: ana sayfada görünmez',create:'Oluştur',
   } as any,
   'pl': {
     nameplaceholder:'Wpisz swoje imię',createRoom:'＋ Utwórz nowy pokój',orJoin:'── lub dołącz do aktywnego pokoju ──',
@@ -502,6 +523,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Otwórz Google Maps',longPressCoord:'Przytrzymaj cel na mapie',copyCoordBelow:'Skopiuj wyświetlone współrzędne i wklej poniżej',
     logout:'🚪 Opuść pokój',logoutConfirm:'Czy na pewno chcesz opuścić pokój?',
     flipCamera:'🔄 Zmień kamerę',
+    createRoomTitle:'＋ Utwórz nowy pokój',roomNamePlaceholder:'Nazwa pokoju (widoczna dla zespołu)',publicRoomLabel:'Pokój publiczny',publicRoomHint:'Prywatny: nie pojawi się na stronie głównej',create:'Utwórz',
   } as any,
   'nl': {
     nameplaceholder:'Voer je naam in',createRoom:'＋ Nieuwe kamer maken',orJoin:'── of neem deel aan een actieve kamer ──',
@@ -526,6 +548,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Google Maps openen',longPressCoord:'Houd de bestemming op de kaart ingedrukt',copyCoordBelow:'Kopieer de getoonde coördinaten en plak hieronder',
     logout:'🚪 Kamer verlaten',logoutConfirm:'Weet je zeker dat je de kamer wilt verlaten?',
     flipCamera:'🔄 Camera wisselen',
+    createRoomTitle:'＋ Nieuwe kamer maken',roomNamePlaceholder:'Naam kamer (zichtbaar voor team)',publicRoomLabel:'Openbare kamer',publicRoomHint:'Privé: niet zichtbaar op de startpagina',create:'Maken',
   } as any,
   'uk': {
     nameplaceholder:'Введіть ваше ім\'я',createRoom:'＋ Створити кімнату',orJoin:'── або приєднатись до активної ──',
@@ -550,6 +573,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Відкрити Google Maps',longPressCoord:'Утримуйте пункт призначення на карті',copyCoordBelow:'Скопіюйте показані координати та вставте нижче',
     logout:'🚪 Покинути кімнату',logoutConfirm:'Ви впевнені, що хочете покинути кімнату?',
     flipCamera:'🔄 Перемкнути камеру',
+    createRoomTitle:'＋ Створити кімнату',roomNamePlaceholder:'Назва кімнати (видно команді)',publicRoomLabel:'Публічна кімната',publicRoomHint:'Приватна: не показується на головній',create:'Створити',
   } as any,
   'ms': {
     nameplaceholder:'Masukkan nama anda',createRoom:'＋ Cipta bilik baru',orJoin:'── atau sertai bilik aktif ──',
@@ -574,6 +598,7 @@ const T: Record<Lang, Translations> = {
     openGmaps:'Buka Google Maps',longPressCoord:'Tekan lama destinasi di peta',copyCoordBelow:'Salin koordinat yang dipaparkan di atas dan tampal di bawah',
     logout:'🚪 Tinggalkan bilik',logoutConfirm:'Adakah anda pasti mahu meninggalkan bilik?',
     flipCamera:'🔄 Tukar kamera',
+    createRoomTitle:'＋ Cipta bilik baru',roomNamePlaceholder:'Nama bilik (ditunjukkan kepada rakan)',publicRoomLabel:'Bilik awam',publicRoomHint:'Peribadi: tidak akan dipaparkan di halaman utama',create:'Cipta',
   } as any,
 };
 
