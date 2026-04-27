@@ -500,7 +500,19 @@ function bootApp(lang: Lang) {
     input.addEventListener('keydown',(e: KeyboardEvent)=>{if(e.key==='Enter'&&!e.isComposing&&!(input as any).composing){e.preventDefault();sendMsg();}});
     el('chat-send').addEventListener('click',sendMsg);
   }
-  function sendMsg(){const input=el<HTMLInputElement>('chat-input');if((input as any).composing)return;const text=input.value.trim();if(!text)return;input.value='';const fd=new FormData();fd.append('room',ROOM);fd.append('name',ME);fd.append('content',text);fetch('/api/message',{method:'POST',body:fd});}
+  function sendMsg(){
+    const input=el<HTMLInputElement>('chat-input');if((input as any).composing)return;
+    const text=input.value.trim();if(!text)return;input.value='';
+    const box=el('chat-msgs');
+    const div=document.createElement('div');div.className='msg';div.style.opacity='0.5';
+    div.innerHTML=`<span class="who" style="color:${nameColor(ME)}">${escHtml(ME)}</span>${escHtml(text)}`;
+    box.appendChild(div);box.scrollTop=box.scrollHeight;
+    const fd=new FormData();fd.append('room',ROOM);fd.append('name',ME);fd.append('content',text);
+    fetch('/api/message',{method:'POST',body:fd}).then(r=>r.json()).then(res=>{
+      if(res?.ok){if(res.id){const id=parseInt(res.id);if(id>lastMsgId)lastMsgId=id;}div.style.opacity='';}
+      else{div.style.opacity='';div.style.color='#f87171';}
+    }).catch(()=>{div.style.opacity='';div.style.color='#f87171';});
+  }
 
   document.querySelectorAll('.tab').forEach(t=>{
     (t as HTMLElement).onclick=()=>{

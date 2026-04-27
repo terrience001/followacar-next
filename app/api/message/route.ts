@@ -8,8 +8,8 @@ export async function POST(req: NextRequest) {
   const name    = (data.get('name')    as string ?? '').trim();
   const content = (data.get('content') as string ?? '').trim();
   if (!room || !name || !content) return NextResponse.json({ ok: false });
-  await db`INSERT INTO messages (room_id, name, content) VALUES (${room}, ${name}, ${content})`;
-  return NextResponse.json({ ok: true });
+  const rows = await db`INSERT INTO messages (room_id, name, content) VALUES (${room}, ${name}, ${content}) RETURNING id`;
+  return NextResponse.json({ ok: true, id: rows[0]?.id });
 }
 
 export async function GET(req: NextRequest) {
