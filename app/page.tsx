@@ -120,21 +120,15 @@ export default function Home() {
           </div>
           <div className="tab-panel" id="tab-call">
             <div id="call-panel">
-              <div className="call-label" style={{marginBottom:'.4rem'}}>{t.myAvatar}</div>
               <div style={{display:'flex',alignItems:'center',gap:'.7rem',marginBottom:'.9rem'}}>
-                <div id="my-avatar-wrap" style={{width:'44px',height:'44px',borderRadius:'50%',background:'#334155',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',overflow:'hidden',flexShrink:0,border:'2px solid #475569'}}>
+                <div id="my-avatar-wrap" style={{position:'relative',width:'44px',height:'44px',borderRadius:'50%',background:'#334155',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',overflow:'hidden',flexShrink:0,border:'2px solid #475569'}}>
                   <span id="my-avatar-ph" style={{fontSize:'1.3rem',pointerEvents:'none'}}>👤</span>
                   <img id="my-avatar-img" style={{width:'44px',height:'44px',objectFit:'cover',display:'none',borderRadius:'50%',pointerEvents:'none'}} alt="" />
+                  <div style={{position:'absolute',bottom:0,right:0,background:'#0f172a',borderRadius:'50%',width:'16px',height:'16px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',pointerEvents:'none'}}>📷</div>
                 </div>
-                <div style={{display:'flex',flexDirection:'column',gap:'.3rem'}}>
-                  <span id="my-name-label" style={{fontSize:'.85rem',color:'#f1f5f9',fontWeight:600}}></span>
-                  <button id="avatar-upload-btn" style={{background:'#334155',color:'#94a3b8',border:'none',borderRadius:'6px',padding:'.25rem .65rem',fontSize:'.75rem',cursor:'pointer'}}>{t.uploadAvatar}</button>
-                </div>
+                <span id="my-name-label" style={{fontSize:'.85rem',color:'#f1f5f9',fontWeight:600}}></span>
                 <input type="file" id="avatar-input" accept="image/*" style={{display:'none'}} />
               </div>
-              <div className="call-label">{t.members}</div>
-              <div id="members-list" style={{display:'flex',flexWrap:'wrap',gap:'.4rem',marginBottom:'.5rem'}}></div>
-              <div className="call-label">{t.voiceCall}</div>
               <div className="call-actions">
                 <button id="group-call-btn">{t.joinVoice}</button>
                 <button id="mute-btn">{t.mute}</button>
@@ -142,6 +136,8 @@ export default function Home() {
                 <button id="flip-btn">{t.flipCamera}</button>
                 <button id="screen-btn">{t.screen}</button>
               </div>
+              <div className="call-label" style={{marginTop:'.7rem'}}>{t.members}</div>
+              <div id="members-list" style={{display:'flex',flexWrap:'wrap',gap:'.4rem',marginBottom:'.5rem'}}></div>
               <div className="peer-status" id="peer-status"></div>
               <div style={{marginTop:'1rem',borderTop:'1px solid #334155',paddingTop:'.75rem'}}>
                 <button id="logout-btn" style={{background:'transparent',color:'#f87171',border:'1px solid #f87171',borderRadius:'8px',padding:'.45rem 1rem',fontSize:'.85rem',cursor:'pointer',width:'100%'}}>{t.logout}</button>
@@ -536,7 +532,6 @@ function bootApp(lang: Lang) {
   function initCall(){
     el('my-name-label').textContent=ME;
     el('my-avatar-wrap').onclick=()=>el('avatar-input').click();
-    el('avatar-upload-btn').onclick=()=>el('avatar-input').click();
     el<HTMLInputElement>('avatar-input').onchange=(e: any)=>{if(e.target.files[0])uploadAvatar(e.target.files[0]);e.target.value='';};
     el('group-call-btn').onclick=async()=>inCall?leaveGroupCall():await joinGroupCall();
     el('mute-btn').onclick=()=>{muted=!muted;localStream?.getAudioTracks().forEach(t=>t.enabled=!muted);const b=el('mute-btn');b.textContent=muted?tr('unmute','🔇 Unmute'):tr('mute','🎙 Mute');b.classList.toggle('muted',muted);if(voiceStatus[ME])voiceStatus[ME].muted=muted;broadcastSignal(JSON.stringify({type:'call-mute',muted}));updateMembersVoice();};
