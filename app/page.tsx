@@ -522,7 +522,12 @@ function bootApp(lang: Lang) {
     };
   });
 
-  const STUN={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+  const STUN={iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:138.2.60.1:3478'},
+    {urls:'turn:138.2.60.1:3478',username:'followacar',credential:'followacar2024'},
+    {urls:'turn:138.2.60.1:3478?transport=tcp',username:'followacar',credential:'followacar2024'},
+  ]};
   const peers: Record<string,any>={},peerRoles: Record<string,string>={},dataChannels: Record<string,any>={};
   const audioEls: Record<string,HTMLAudioElement>={},videoEls: Record<string,HTMLElement>={};
   let localStream: MediaStream|null=null,inCall=false,muted=false,lastSigId=0;
