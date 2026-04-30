@@ -19,6 +19,11 @@ export default function Home() {
     localStorage.setItem('lang', l);
   }
 
+  const [isLine, setIsLine] = useState(false);
+  useEffect(() => {
+    if (/Line\//i.test(navigator.userAgent)) setIsLine(true);
+  }, []);
+
   useEffect(() => {
     if (!langReady) return;
     const link = document.createElement('link');
@@ -40,6 +45,32 @@ export default function Home() {
   if (!langReady) return null;
 
   const isRtl = lang === 'ar';
+
+  if (isLine) return (
+    <div style={{minHeight:'100vh',background:'#0f172a',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'2rem',textAlign:'center',gap:'1.5rem'}}>
+      <div style={{fontSize:'3rem'}}>🌐</div>
+      <div style={{color:'#f1f5f9',fontSize:'1.1rem',fontWeight:600,lineHeight:1.6}}>
+        請用瀏覽器開啟<br/>
+        <span style={{color:'#94a3b8',fontSize:'.9rem',fontWeight:400}}>FollowACar 需要麥克風與相機權限，LINE 內建瀏覽器不支援</span>
+      </div>
+      <button
+        onClick={()=>{
+          const ua = navigator.userAgent;
+          const url = location.href;
+          if (/iPhone|iPad/i.test(ua)) {
+            location.href = url.replace(/^https?:\/\//, 'googlechrome://');
+            setTimeout(()=>{ location.href = url.replace(/^https?:\/\//, 'x-safari-https://'); }, 500);
+          } else {
+            location.href = `intent://${url.replace(/^https?:\/\//,'')}#Intent;scheme=https;package=com.android.chrome;end`;
+          }
+        }}
+        style={{background:'#22c55e',color:'#fff',border:'none',borderRadius:'10px',padding:'.75rem 2rem',fontSize:'1rem',fontWeight:600,cursor:'pointer'}}
+      >在瀏覽器中開啟</button>
+      <div style={{color:'#475569',fontSize:'.8rem'}}>
+        或點右上角 ··· → 用瀏覽器開啟
+      </div>
+    </div>
+  );
 
   return (
     <div dir={isRtl ? 'rtl' : 'ltr'}>
