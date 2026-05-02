@@ -187,7 +187,7 @@ export default function Home() {
             <span>{t.publicRoomLabel}</span>
           </label>
           <p id="create-public-hint">{t.publicRoomHint}</p>
-          <p id="create-err"></p>
+          <p id="create-err" style={{display:'none'}}></p>
           <div className="dest-dialog-btns">
             <button id="create-confirm">{t.create}</button>
             <button id="create-cancel">{t.cancel}</button>
@@ -212,7 +212,7 @@ export default function Home() {
             <input id="dest-coord" placeholder={t.coordPlaceholder} autoComplete="off" inputMode="decimal" spellCheck={false} />
           </div>
           <input id="dest-name" placeholder={t.destName} autoComplete="off" />
-          <div id="dest-err"></div>
+          <div id="dest-err" style={{display:'none'}}></div>
           <div className="dest-dialog-btns">
             <button id="dest-confirm">{t.confirm}</button>
             <button id="dest-clear">{t.clear}</button>

@@ -76,7 +76,7 @@ input,textarea{touch-action:manipulation}
 .dest-dialog-btns{display:flex;gap:.5rem}
 #dest-confirm{flex:1;background:#f59e0b;color:#000;border:none;border-radius:8px;padding:.55rem;font-weight:700;cursor:pointer}
 #dest-clear,#dest-cancel{background:#334155;color:#f1f5f9;border:none;border-radius:8px;padding:.55rem .9rem;cursor:pointer;font-size:.85rem}
-#dest-err{color:#f87171;font-size:.8rem;display:none}
+#dest-err{color:#f87171;font-size:.8rem}
 
 #create-dialog{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:999;padding:1.5rem}
 #create-dialog.open{display:flex}
@@ -90,7 +90,7 @@ input,textarea{touch-action:manipulation}
 #create-confirm{flex:1;background:#38bdf8;color:#0f172a;border:none;border-radius:8px;padding:.55rem;font-weight:700;cursor:pointer}
 #create-confirm:disabled{opacity:.6;cursor:not-allowed}
 #create-cancel{background:#334155;color:#f1f5f9;border:none;border-radius:8px;padding:.55rem .9rem;cursor:pointer;font-size:.85rem}
-#create-err{color:#f87171;font-size:.8rem;display:none}
+#create-err{color:#f87171;font-size:.8rem}
 
 .car-label,.dest-label{padding:2px 7px;border-radius:4px;font-size:.75rem;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .dest-label{background:#f59e0b;color:#000}
