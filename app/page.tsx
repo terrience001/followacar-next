@@ -342,7 +342,7 @@ function bootApp(lang: Lang) {
     const fd=new FormData();fd.append('name',roomName);fd.append('is_public',isPublic?'true':'false');
     const res=await fetch('/api/room',{method:'POST',body:fd}).then(r=>r.json()).catch(()=>({ok:false}));
     btn.disabled=false;btn.textContent=original;
-    if(!res.ok){errEl.textContent=tr('loadFailed','Failed to load rooms');errEl.style.display='';return;}
+    if(!res.ok){errEl.textContent=res.error?`Server error: ${res.error}`:tr('loadFailed','Failed to load rooms');errEl.style.display='';return;}
     ME=myName;ROOM=res.room;
     el('share-link').textContent=location.origin+'/?room='+ROOM;
     closeCreateDialog();hide('screen-home');show('screen-created');
