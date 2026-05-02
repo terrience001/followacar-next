@@ -167,12 +167,12 @@ export default function Home() {
                 <button id="flip-btn">{t.flipCamera}</button>
                 <button id="screen-btn">{t.screen}</button>
               </div>
-              <div className="call-label" style={{marginTop:'.7rem'}}>{t.members}</div>
-              <div id="members-list" style={{display:'flex',flexWrap:'wrap',gap:'.4rem',marginBottom:'.5rem'}}></div>
-              <div className="peer-status" id="peer-status"></div>
               <div className="call-label" id="rec-label" style={{marginTop:'.7rem'}}></div>
               <button id="rec-btn"></button>
               <div id="rec-list"></div>
+              <div className="call-label" style={{marginTop:'.7rem'}}>{t.members}</div>
+              <div id="members-list" style={{display:'flex',flexWrap:'wrap',gap:'.4rem',marginBottom:'.5rem'}}></div>
+              <div className="peer-status" id="peer-status"></div>
               <div style={{marginTop:'1rem',borderTop:'1px solid #334155',paddingTop:'.75rem'}}>
                 <button id="logout-btn" style={{background:'transparent',color:'#f87171',border:'1px solid #f87171',borderRadius:'8px',padding:'.45rem 1rem',fontSize:'.85rem',cursor:'pointer',width:'100%'}}>{t.logout}</button>
               </div>
