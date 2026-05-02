@@ -170,6 +170,9 @@ export default function Home() {
               <div className="call-label" style={{marginTop:'.7rem'}}>{t.members}</div>
               <div id="members-list" style={{display:'flex',flexWrap:'wrap',gap:'.4rem',marginBottom:'.5rem'}}></div>
               <div className="peer-status" id="peer-status"></div>
+              <div className="call-label" id="rec-label" style={{marginTop:'.7rem'}}></div>
+              <button id="rec-btn"></button>
+              <div id="rec-list"></div>
               <div style={{marginTop:'1rem',borderTop:'1px solid #334155',paddingTop:'.75rem'}}>
                 <button id="logout-btn" style={{background:'transparent',color:'#f87171',border:'1px solid #f87171',borderRadius:'8px',padding:'.45rem 1rem',fontSize:'.85rem',cursor:'pointer',width:'100%'}}>{t.logout}</button>
               </div>
@@ -578,6 +581,104 @@ function bootApp(lang: Lang) {
       sessionStorage.removeItem('room');sessionStorage.removeItem('name');
       location.href=location.origin;
     };
+    initRecording();
+  }
+
+  const REC_DB='fac_recordings',REC_STORE='recs';
+  function openRecDb():Promise<IDBDatabase>{
+    return new Promise((resolve,reject)=>{
+      const r=indexedDB.open(REC_DB,1);
+      r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains(REC_STORE))db.createObjectStore(REC_STORE,{keyPath:'id',autoIncrement:true});};
+      r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+    });
+  }
+  async function recAdd(blob: Blob,ext: string){
+    const db=await openRecDb();
+    return new Promise<void>((resolve,reject)=>{
+      const tx=db.transaction(REC_STORE,'readwrite');
+      tx.objectStore(REC_STORE).add({blob,ext,createdAt:Date.now()});
+      tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);
+    });
+  }
+  async function recList():Promise<{id:number;blob:Blob;ext:string;createdAt:number}[]>{
+    const db=await openRecDb();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(REC_STORE,'readonly');
+      const r=tx.objectStore(REC_STORE).getAll();
+      r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error);
+    });
+  }
+  async function recDelete(id: number){
+    const db=await openRecDb();
+    return new Promise<void>((resolve,reject)=>{
+      const tx=db.transaction(REC_STORE,'readwrite');
+      tx.objectStore(REC_STORE).delete(id);
+      tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);
+    });
+  }
+
+  let recRecorder: MediaRecorder|null=null,recChunks: Blob[]=[],recStream: MediaStream|null=null;
+  const recObjectUrls: string[]=[];
+  function pickRecMime(){
+    const cands=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/mp4;codecs=mp4a.40.2','audio/ogg;codecs=opus'];
+    for(const m of cands)if((window as any).MediaRecorder?.isTypeSupported?.(m))return m;
+    return '';
+  }
+  async function recStart(){
+    if(recRecorder)return;
+    try{recStream=await navigator.mediaDevices.getUserMedia({audio:true});}
+    catch(e: any){alert(tr('micError','Cannot access microphone: ')+e.message);return;}
+    const mime=pickRecMime();
+    try{recRecorder=mime?new MediaRecorder(recStream,{mimeType:mime}):new MediaRecorder(recStream);}
+    catch(e: any){alert(tr('micError','Cannot access microphone: ')+e.message);recStream.getTracks().forEach(t=>t.stop());recStream=null;return;}
+    recChunks=[];
+    recRecorder.ondataavailable=(e: BlobEvent)=>{if(e.data.size>0)recChunks.push(e.data);};
+    recRecorder.onstop=async()=>{
+      const type=recRecorder?.mimeType||'audio/webm';
+      const ext=type.includes('mp4')?'m4a':type.includes('ogg')?'ogg':'webm';
+      const blob=new Blob(recChunks,{type});
+      recStream?.getTracks().forEach(t=>t.stop());recStream=null;recRecorder=null;recChunks=[];
+      try{await recAdd(blob,ext);}catch(e){alert(tr('recordSaveFailed','Failed to save recording'));}
+      updateRecBtn();refreshRecList();
+    };
+    recRecorder.start();updateRecBtn();
+  }
+  function recStop(){try{recRecorder?.stop();}catch{}}
+  function updateRecBtn(){
+    const btn=el('rec-btn');const recording=!!recRecorder;
+    btn.textContent=recording?tr('stopRecord','⏹ 停止錄音'):tr('record','🎙 開始錄音');
+    btn.classList.toggle('recording',recording);
+  }
+  function fmtRecTime(ts: number){
+    const d=new Date(ts);const pad=(n: number)=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  async function refreshRecList(){
+    const list=await recList().catch(()=>[]);
+    while(recObjectUrls.length){const u=recObjectUrls.pop();if(u)URL.revokeObjectURL(u);}
+    const box=el('rec-list');box.innerHTML='';
+    if(!list.length){box.innerHTML=`<span style="font-size:.75rem;color:#4b5563">${escHtml(tr('noRecordings','尚無錄音'))}</span>`;return;}
+    list.sort((a,b)=>b.createdAt-a.createdAt);
+    list.forEach(rec=>{
+      const url=URL.createObjectURL(rec.blob);recObjectUrls.push(url);
+      const fname=`recording-${rec.createdAt}.${rec.ext}`;
+      const row=document.createElement('div');row.className='rec-row';
+      row.innerHTML=`<span class="rec-time">${escHtml(fmtRecTime(rec.createdAt))}</span><audio src="${url}" controls preload="none"></audio><a href="${url}" download="${fname}">⬇</a><button data-id="${rec.id}">🗑</button>`;
+      (row.querySelector('button') as HTMLButtonElement).onclick=async()=>{
+        if(!confirm(tr('deleteConfirm','確定要刪除這段錄音嗎？')))return;
+        await recDelete(rec.id);refreshRecList();
+      };
+      box.appendChild(row);
+    });
+  }
+  function initRecording(){
+    if(!(window as any).MediaRecorder||!navigator.mediaDevices?.getUserMedia){
+      el('rec-label').style.display='none';el('rec-btn').style.display='none';el('rec-list').style.display='none';return;
+    }
+    el('rec-label').textContent=tr('recordings','🎙 錄音');
+    updateRecBtn();
+    el('rec-btn').onclick=()=>recRecorder?recStop():recStart();
+    refreshRecList();
   }
   async function joinGroupCall(){
     try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}catch(e: any){alert(tr('micError','Cannot access microphone: ')+e.message);return;}
