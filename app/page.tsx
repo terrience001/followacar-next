@@ -654,19 +654,58 @@ function bootApp(lang: Lang) {
     recRecorder.ondataavailable=(e: BlobEvent)=>{if(e.data.size>0)recChunks.push(e.data);};
     recRecorder.onstop=async()=>{
       const type=recRecorder?.mimeType||'audio/webm';
-      const ext=type.includes('mp4')?'m4a':type.includes('ogg')?'ogg':'webm';
-      const blob=new Blob(recChunks,{type});
+      const sourceBlob=new Blob(recChunks,{type});
       Object.values(recRemoteSources).forEach(s=>{try{s.disconnect();}catch{}});
       Object.keys(recRemoteSources).forEach(k=>delete recRemoteSources[k]);
       try{recAudioCtx?.close();}catch{}recAudioCtx=null;recDest=null;
       if(ownsMic)ownMic.getTracks().forEach(t=>t.stop());
       recStream=null;recRecorder=null;recChunks=[];
-      try{await recAdd(blob,ext);}catch(e){alert(tr('recordSaveFailed','Failed to save recording'));}
+      let saveBlob: Blob=sourceBlob;
+      let ext=type.includes('mp4')?'m4a':type.includes('ogg')?'ogg':'webm';
+      try{
+        const Ctx=(window as any).AudioContext||(window as any).webkitAudioContext;
+        const ctx: AudioContext=new Ctx();
+        const ab=await sourceBlob.arrayBuffer();
+        const audioBuffer=await ctx.decodeAudioData(ab);
+        saveBlob=audioBufferToWav(audioBuffer);ext='wav';
+        try{await ctx.close();}catch{}
+      }catch{}
+      try{await recAdd(saveBlob,ext);}catch(e){alert(tr('recordSaveFailed','Failed to save recording'));}
       updateRecBtn();refreshRecList();
     };
     recRecorder.start();updateRecBtn();
   }
   function recStop(){try{recRecorder?.stop();}catch{}}
+  function audioBufferToWav(buffer: AudioBuffer): Blob{
+    const numChannels=buffer.numberOfChannels;
+    const sampleRate=buffer.sampleRate;
+    const samples=buffer.length;
+    const bytesPerSample=2;
+    const dataSize=samples*numChannels*bytesPerSample;
+    const ab=new ArrayBuffer(44+dataSize);
+    const v=new DataView(ab);
+    let off=0;
+    const ws=(s: string)=>{for(let i=0;i<s.length;i++)v.setUint8(off++,s.charCodeAt(i));};
+    ws('RIFF');v.setUint32(off,36+dataSize,true);off+=4;
+    ws('WAVE');ws('fmt ');v.setUint32(off,16,true);off+=4;
+    v.setUint16(off,1,true);off+=2;                                  // PCM
+    v.setUint16(off,numChannels,true);off+=2;
+    v.setUint32(off,sampleRate,true);off+=4;
+    v.setUint32(off,sampleRate*numChannels*bytesPerSample,true);off+=4;
+    v.setUint16(off,numChannels*bytesPerSample,true);off+=2;
+    v.setUint16(off,16,true);off+=2;                                 // 16-bit
+    ws('data');v.setUint32(off,dataSize,true);off+=4;
+    const channels: Float32Array[]=[];
+    for(let c=0;c<numChannels;c++)channels.push(buffer.getChannelData(c));
+    for(let i=0;i<samples;i++){
+      for(let c=0;c<numChannels;c++){
+        let s=Math.max(-1,Math.min(1,channels[c][i]));
+        s=s<0?s*0x8000:s*0x7FFF;
+        v.setInt16(off,s,true);off+=2;
+      }
+    }
+    return new Blob([ab],{type:'audio/wav'});
+  }
   function updateRecBtn(){
     const btn=el('rec-btn');const recording=!!recRecorder;
     btn.textContent=recording?tr('stopRecord','⏹ 停止錄音'):tr('record','🎙 開始錄音');
