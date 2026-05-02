@@ -132,7 +132,6 @@ export default function Home() {
       {/* App */}
       <div id="app">
         <div id="map"></div>
-        <div id="video-container"></div>
         <div id="gps-bar">
           <span id="gps-txt">{t.waitingGps}</span>
           <button id="dest-btn">{t.setDest}</button>
@@ -163,12 +162,8 @@ export default function Home() {
               <div className="call-actions">
                 <button id="group-call-btn">{t.joinVoice}</button>
                 <button id="mute-btn">{t.mute}</button>
-                <button id="stream-btn">{t.live}</button>
-                <button id="flip-btn">{t.flipCamera}</button>
-                <button id="screen-btn">{t.screen}</button>
+                <button id="rec-btn"></button>
               </div>
-              <div className="call-label" id="rec-label" style={{marginTop:'.7rem'}}></div>
-              <button id="rec-btn"></button>
               <div id="rec-list"></div>
               <div className="call-label" style={{marginTop:'.7rem'}}>{t.members}</div>
               <div id="members-list" style={{display:'flex',flexWrap:'wrap',gap:'.4rem',marginBottom:'.5rem'}}></div>
@@ -559,9 +554,9 @@ function bootApp(lang: Lang) {
     {urls:'turn:138.2.60.1:3478?transport=tcp',username:'followacar',credential:'followacar2024'},
   ]};
   const peers: Record<string,any>={},peerRoles: Record<string,string>={},dataChannels: Record<string,any>={};
-  const audioEls: Record<string,HTMLAudioElement>={},videoEls: Record<string,HTMLElement>={};
+  const audioEls: Record<string,HTMLAudioElement>={};
+  const remoteStreams: Record<string,MediaStream>={};
   let localStream: MediaStream|null=null,inCall=false,muted=false,lastSigId=0;
-  let streamTrack: MediaStreamTrack|null=null,streaming=false,facingMode:'user'|'environment'='environment';
 
   function initCall(){
     el('my-name-label').textContent=ME;
@@ -569,11 +564,6 @@ function bootApp(lang: Lang) {
     el<HTMLInputElement>('avatar-input').onchange=(e: any)=>{if(e.target.files[0])uploadAvatar(e.target.files[0]);e.target.value='';};
     el('group-call-btn').onclick=async()=>inCall?leaveGroupCall():await joinGroupCall();
     el('mute-btn').onclick=()=>{muted=!muted;localStream?.getAudioTracks().forEach(t=>t.enabled=!muted);const b=el('mute-btn');b.textContent=muted?tr('unmute','🔇 Unmute'):tr('mute','🎙 Mute');b.classList.toggle('muted',muted);if(voiceStatus[ME])voiceStatus[ME].muted=muted;broadcastSignal(JSON.stringify({type:'call-mute',muted}));updateMembersVoice();};
-    el('stream-btn').onclick=()=>streaming?stopStream():startStream('camera');
-    el('flip-btn').style.display='none';
-    el('flip-btn').onclick=()=>flipCamera();
-    if(!navigator.mediaDevices?.getDisplayMedia)el('screen-btn').style.display='none';
-    else el('screen-btn').onclick=()=>startStream('screen');
     el('logout-btn').onclick=()=>{
       if(!confirm(tr('logoutConfirm','Are you sure you want to leave the room?')))return;
       if(inCall)leaveGroupCall();
@@ -618,26 +608,59 @@ function bootApp(lang: Lang) {
   }
 
   let recRecorder: MediaRecorder|null=null,recChunks: Blob[]=[],recStream: MediaStream|null=null;
+  let recAudioCtx: AudioContext|null=null,recDest: MediaStreamAudioDestinationNode|null=null,recOwnsMic=false;
+  const recRemoteSources: Record<string,MediaStreamAudioSourceNode>={};
   const recObjectUrls: string[]=[];
   function pickRecMime(){
     const cands=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/mp4;codecs=mp4a.40.2','audio/ogg;codecs=opus'];
     for(const m of cands)if((window as any).MediaRecorder?.isTypeSupported?.(m))return m;
     return '';
   }
+  function recAttachRemote(name: string,stream: MediaStream){
+    if(!recAudioCtx||!recDest)return;
+    try{recRemoteSources[name]?.disconnect();}catch{}
+    try{const src=recAudioCtx.createMediaStreamSource(stream);src.connect(recDest);recRemoteSources[name]=src;}catch{}
+  }
   async function recStart(){
     if(recRecorder)return;
-    try{recStream=await navigator.mediaDevices.getUserMedia({audio:true});}
-    catch(e: any){alert(tr('micError','Cannot access microphone: ')+e.message);return;}
+    let mic: MediaStream;recOwnsMic=false;
+    if(inCall&&localStream)mic=localStream;
+    else{
+      try{mic=await navigator.mediaDevices.getUserMedia({audio:true});recOwnsMic=true;}
+      catch(e: any){alert(tr('micError','Cannot access microphone: ')+e.message);return;}
+    }
+    try{
+      const Ctx=(window as any).AudioContext||(window as any).webkitAudioContext;
+      const ctx: AudioContext=new Ctx();
+      const dest=ctx.createMediaStreamDestination();
+      ctx.createMediaStreamSource(mic).connect(dest);
+      recAudioCtx=ctx;recDest=dest;
+      Object.entries(remoteStreams).forEach(([n,s])=>recAttachRemote(n,s));
+      recStream=dest.stream;
+    }catch(e: any){
+      alert(tr('micError','Cannot access microphone: ')+e.message);
+      if(recOwnsMic)mic.getTracks().forEach(t=>t.stop());
+      recAudioCtx?.close();recAudioCtx=null;recDest=null;return;
+    }
     const mime=pickRecMime();
     try{recRecorder=mime?new MediaRecorder(recStream,{mimeType:mime}):new MediaRecorder(recStream);}
-    catch(e: any){alert(tr('micError','Cannot access microphone: ')+e.message);recStream.getTracks().forEach(t=>t.stop());recStream=null;return;}
+    catch(e: any){
+      alert(tr('micError','Cannot access microphone: ')+e.message);
+      if(recOwnsMic)mic.getTracks().forEach(t=>t.stop());
+      recAudioCtx?.close();recAudioCtx=null;recDest=null;recStream=null;return;
+    }
     recChunks=[];
+    const ownsMic=recOwnsMic,ownMic=mic;
     recRecorder.ondataavailable=(e: BlobEvent)=>{if(e.data.size>0)recChunks.push(e.data);};
     recRecorder.onstop=async()=>{
       const type=recRecorder?.mimeType||'audio/webm';
       const ext=type.includes('mp4')?'m4a':type.includes('ogg')?'ogg':'webm';
       const blob=new Blob(recChunks,{type});
-      recStream?.getTracks().forEach(t=>t.stop());recStream=null;recRecorder=null;recChunks=[];
+      Object.values(recRemoteSources).forEach(s=>{try{s.disconnect();}catch{}});
+      Object.keys(recRemoteSources).forEach(k=>delete recRemoteSources[k]);
+      try{recAudioCtx?.close();}catch{}recAudioCtx=null;recDest=null;
+      if(ownsMic)ownMic.getTracks().forEach(t=>t.stop());
+      recStream=null;recRecorder=null;recChunks=[];
       try{await recAdd(blob,ext);}catch(e){alert(tr('recordSaveFailed','Failed to save recording'));}
       updateRecBtn();refreshRecList();
     };
@@ -684,82 +707,41 @@ function bootApp(lang: Lang) {
     try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}catch(e: any){alert(tr('micError','Cannot access microphone: ')+e.message);return;}
     inCall=true;muted=false;el('group-call-btn').textContent=tr('leaveVoice','📵 Leave voice');el('group-call-btn').classList.add('in-call');
     el('mute-btn').style.display='inline-block';el('mute-btn').textContent=tr('mute','🎙 Mute');el('mute-btn').classList.remove('muted');
-    el('stream-btn').style.display='inline-block';el('screen-btn').style.display='inline-block';updateStreamUI();
     lastMemberList.filter((p: any)=>p.name!==ME&&isOnline(p.ts)).forEach((p: any)=>callPeer(p.name));
     broadcastSignal(JSON.stringify({type:'call-join'}));voiceStatus[ME]={inCall:true,muted:false};updateMembersVoice();
   }
   function leaveGroupCall(){
     inCall=false;localStream?.getTracks().forEach(t=>t.stop());localStream=null;Object.keys(peers).forEach(hangupPeer);
     el('group-call-btn').textContent=tr('joinVoice','🎙 Join voice');el('group-call-btn').classList.remove('in-call');
-    el('mute-btn').style.display='none';el('stream-btn').style.display='none';el('screen-btn').style.display='none';
-    if(streaming)stopStream();broadcastSignal(JSON.stringify({type:'call-leave'}));voiceStatus[ME]={inCall:false,muted:false};updatePeerStatus();updateMembersVoice();
+    el('mute-btn').style.display='none';
+    broadcastSignal(JSON.stringify({type:'call-leave'}));voiceStatus[ME]={inCall:false,muted:false};updatePeerStatus();updateMembersVoice();
   }
-  function showVideo(name: string,stream: MediaStream){
-    removeVideo(name);el('video-container').style.display='flex';
-    const wrap=document.createElement('div');wrap.className='video-wrap';wrap.id='vw-'+name;
-    const v=document.createElement('video') as HTMLVideoElement;v.autoplay=true;v.playsInline=true;v.muted=(name==='local');v.srcObject=stream;
-    const lbl=document.createElement('div');lbl.className='vlabel';lbl.textContent=name==='local'?(ME+' 📡'):name;
-    wrap.append(v,lbl);el('video-container').appendChild(wrap);videoEls[name]=wrap;
-  }
-  function removeVideo(name: string){videoEls[name]?.remove();delete videoEls[name];if(!Object.keys(videoEls).length)el('video-container').style.display='none';}
-  async function startStream(mode: string){
-    try{
-      const stream=mode==='screen'?await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15} as any,audio:false}):await navigator.mediaDevices.getUserMedia({video:{width:640,height:360,frameRate:15,facingMode} as any,audio:false});
-      streamTrack=stream.getVideoTracks()[0];streaming=true;showVideo('local',stream);updateStreamUI(mode);streamTrack.onended=stopStream;
-      for(const[n,pc] of Object.entries(peers)){pc.addTrack(streamTrack,stream);if(peerRoles[n]==='caller')await renegotiate(n,pc);}
-      broadcastSignal(JSON.stringify({type:'stream-start'}));
-    }catch(e: any){alert(tr('micError','Cannot access camera: ')+e.message);}
-  }
-  async function flipCamera(){
-    if(!streaming)return;
-    facingMode=facingMode==='environment'?'user':'environment';
-    try{
-      const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:360,frameRate:15,facingMode} as any,audio:false});
-      const newTrack=stream.getVideoTracks()[0];
-      for(const[,pc] of Object.entries(peers)){
-        const sender=pc.getSenders().find((s: any)=>s.track?.kind==='video');
-        if(sender)await sender.replaceTrack(newTrack);
-      }
-      streamTrack?.stop();streamTrack=newTrack;streamTrack.onended=stopStream;
-      const lv=document.querySelector('#vw-local video') as HTMLVideoElement;
-      if(lv)lv.srcObject=stream;
-    }catch(e: any){alert(tr('micError','Cannot access camera: ')+e.message);facingMode=facingMode==='environment'?'user':'environment';}
-  }
-  async function stopStream(){
-    if(!streaming)return;streamTrack?.stop();streamTrack=null;streaming=false;removeVideo('local');updateStreamUI();
-    for(const[n,pc] of Object.entries(peers)){const s=pc.getSenders().find((s: any)=>s.track?.kind==='video');if(s){pc.removeTrack(s);if(peerRoles[n]==='caller')await renegotiate(n,pc);}}
-    broadcastSignal(JSON.stringify({type:'stream-stop'}));
-  }
-  async function renegotiate(name: string,pc: any){try{const o=await pc.createOffer();await pc.setLocalDescription(o);sendSignal(name,JSON.stringify({type:'voice-offer',sdp:o.sdp}));}catch(e){}}
-  let _streamMode='';
-  function updateStreamUI(mode=''){if(mode)_streamMode=mode;const sb=el('stream-btn'),scb=el('screen-btn'),fb=el('flip-btn'),h=!!navigator.mediaDevices?.getDisplayMedia;if(streaming){sb.textContent=tr('stopLive','⏹ Stop live');sb.classList.add('streaming');scb.style.display='none';fb.style.display=_streamMode==='camera'?'inline-block':'none';}else{sb.textContent=tr('live','📹 Live');sb.classList.remove('streaming');scb.style.display=h?'inline-block':'none';fb.style.display='none';}}
   function setupDC(name: string,dc: any){dataChannels[name]=dc;dc.onmessage=(e: MessageEvent)=>{try{const d=JSON.parse(e.data);if(d.type==='loc'&&d.name&&d.lat&&d.lng)updateMarkers(lastMemberList.map(p=>p.name===d.name?{...p,lat:d.lat,lng:d.lng,ts:Math.floor(Date.now()/1000)}:p));}catch(e){}};dc.onclose=()=>{delete dataChannels[name];};}
   function broadcastLocation(lat: number,lng: number){const msg=JSON.stringify({type:'loc',name:ME,lat,lng});Object.values(dataChannels).forEach((dc: any)=>{try{if(dc.readyState==='open')dc.send(msg);}catch(e){}});}
   async function callPeer(target: string){
     if(peers[target])return;const pc=createPC(target);peerRoles[target]='caller';
-    localStream!.getTracks().forEach(t=>pc.addTrack(t,localStream!));if(streamTrack)pc.addTrack(streamTrack,new MediaStream([streamTrack]));
+    localStream!.getTracks().forEach(t=>pc.addTrack(t,localStream!));
     const dc=pc.createDataChannel('loc');setupDC(target,dc);
     const offer=await pc.createOffer();await pc.setLocalDescription(offer);sendSignal(target,JSON.stringify({type:'voice-offer',sdp:offer.sdp}));
   }
   function createPC(name: string){
     hangupPeer(name);const pc=new RTCPeerConnection(STUN);peers[name]=pc;
     pc.onicecandidate=(e: RTCPeerConnectionIceEvent)=>{if(e.candidate)sendSignal(name,JSON.stringify({type:'candidate',candidate:e.candidate}));};
-    pc.ontrack=(e: RTCTrackEvent)=>{if(e.track.kind==='audio')playAudio(name,e.streams[0]);else if(e.track.kind==='video')showVideo(name,e.streams[0]);};
+    pc.ontrack=(e: RTCTrackEvent)=>{if(e.track.kind==='audio'){remoteStreams[name]=e.streams[0];playAudio(name,e.streams[0]);recAttachRemote(name,e.streams[0]);}};
     pc.ondatachannel=(e: RTCDataChannelEvent)=>setupDC(name,e.channel);
     pc.onconnectionstatechange=()=>{if(['disconnected','failed','closed'].includes(pc.connectionState)){hangupPeer(name);updatePeerStatus();}};
     return pc;
   }
-  function hangupPeer(name: string){peers[name]?.close();delete peers[name];delete peerRoles[name];removeAudio(name);removeVideo(name);delete dataChannels[name];}
+  function hangupPeer(name: string){peers[name]?.close();delete peers[name];delete peerRoles[name];removeAudio(name);delete remoteStreams[name];delete dataChannels[name];}
   async function handleSignal(sig: any){
     const data=JSON.parse(sig.data),from=sig.from_name;
     if(data.type==='call-join'){voiceStatus[from]={inCall:true,muted:false};if(inCall&&!peers[from])callPeer(from);updateMembersVoice();}
     else if(data.type==='call-leave'){voiceStatus[from]={inCall:false,muted:false};updateMembersVoice();}
     else if(data.type==='call-mute'){if(voiceStatus[from])voiceStatus[from].muted=data.muted;else voiceStatus[from]={inCall:true,muted:data.muted};updateMembersVoice();}
     else if(data.type==='avatar-update'){loadAvatars();}
-    else if(data.type==='stream-stop'){removeVideo(from);}
     else if(data.type==='voice-offer'){
       if(!inCall)return;let pc=peers[from];
-      if(!pc){pc=createPC(from);peerRoles[from]='callee';if(localStream)localStream.getTracks().forEach(t=>pc.addTrack(t,localStream!));if(streamTrack)pc.addTrack(streamTrack,new MediaStream([streamTrack]));}
+      if(!pc){pc=createPC(from);peerRoles[from]='callee';if(localStream)localStream.getTracks().forEach(t=>pc.addTrack(t,localStream!));}
       await pc.setRemoteDescription({type:'offer',sdp:data.sdp});const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
       sendSignal(from,JSON.stringify({type:'voice-answer',sdp:ans.sdp}));updatePeerStatus();
     }else if(data.type==='voice-answer'){await peers[from]?.setRemoteDescription({type:'answer',sdp:data.sdp});updatePeerStatus();}
