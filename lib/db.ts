@@ -1,10 +1,11 @@
 import { createClient, type InValue } from '@libsql/client';
 
 function createDb() {
-  const client = createClient({
-    url: (process.env.TURSO_URL ?? ''),
-    authToken: process.env.TURSO_TOKEN ?? '',
-  });
+  const url = process.env.TURSO_URL ?? '';
+  const authToken = process.env.TURSO_TOKEN ?? '';
+  if (!url) throw new Error('TURSO_URL env var is not set');
+  if (!authToken) throw new Error('TURSO_TOKEN env var is not set');
+  const client = createClient({ url, authToken });
 
   return async function db(strings: TemplateStringsArray, ...values: InValue[]) {
     let sql = '';
@@ -25,10 +26,11 @@ let schemaPromise: Promise<void> | null = null;
 
 export function ensureMigrated(): Promise<void> {
   if (schemaPromise) return schemaPromise;
-  const client = createClient({
-    url: (process.env.TURSO_URL ?? ''),
-    authToken: process.env.TURSO_TOKEN ?? '',
-  });
+  const url = process.env.TURSO_URL ?? '';
+  const authToken = process.env.TURSO_TOKEN ?? '';
+  if (!url) throw new Error('TURSO_URL env var is not set');
+  if (!authToken) throw new Error('TURSO_TOKEN env var is not set');
+  const client = createClient({ url, authToken });
   schemaPromise = client.batch([
     { sql: `CREATE TABLE IF NOT EXISTS rooms (
       id TEXT PRIMARY KEY,
