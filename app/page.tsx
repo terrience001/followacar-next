@@ -138,17 +138,17 @@ export default function Home() {
         </div>
         <div id="panel">
           <div id="tabs">
-            <button className="tab active" data-tab="chat">{t.msgTab}</button>
-            <button className="tab" data-tab="call">{t.callTab}</button>
+            <button className="tab" data-tab="chat">{t.msgTab}</button>
+            <button className="tab active" data-tab="call">{t.callTab}</button>
           </div>
-          <div className="tab-panel active" id="tab-chat">
+          <div className="tab-panel" id="tab-chat">
             <div id="chat-msgs"></div>
             <div id="chat-form">
               <input id="chat-input" placeholder="…" autoComplete="off" spellCheck={false} />
               <button id="chat-send">➤</button>
             </div>
           </div>
-          <div className="tab-panel" id="tab-call">
+          <div className="tab-panel active" id="tab-call">
             <div id="call-panel">
               <div style={{display:'flex',alignItems:'center',gap:'.7rem',marginBottom:'.9rem'}}>
                 <div id="my-avatar-wrap" style={{position:'relative',width:'44px',height:'44px',borderRadius:'50%',background:'#334155',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',overflow:'hidden',flexShrink:0,border:'2px solid #475569'}}>
@@ -793,11 +793,17 @@ function bootApp(lang: Lang) {
 
   function startPolling(){
     restoreMyAvatar();loadAvatars();
-    let es: EventSource|null=null,reconnectTimer: any=null;
+    let es: EventSource|null=null,reconnectTimer: any=null,msgsInitialized=false;
     function applyMessages(list: any[]){
       if(!list?.length)return;const box=el('chat-msgs');
-      list.forEach(m=>{const id=parseInt(m.id);if(id<=lastMsgId)return;lastMsgId=id;const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${escHtml(m.content)}`;box.appendChild(div);});
+      let hasIncoming=false;
+      list.forEach(m=>{const id=parseInt(m.id);if(id<=lastMsgId)return;lastMsgId=id;if(m.name!==ME)hasIncoming=true;const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${escHtml(m.content)}`;box.appendChild(div);});
       box.scrollTop=box.scrollHeight;
+      if(msgsInitialized&&hasIncoming&&!el('tab-chat').classList.contains('active')){
+        const tab=document.querySelector('.tab[data-tab="chat"]') as HTMLElement|null;
+        tab?.click();
+      }
+      msgsInitialized=true;
     }
     function applySignals(list: any[]){if(!list?.length)return;list.forEach(s=>{const id=parseInt(s.id);if(id<=lastSigId)return;lastSigId=id;handleSignal(s);});}
     function closeStream(){if(es){try{es.close();}catch{}es=null;}}
