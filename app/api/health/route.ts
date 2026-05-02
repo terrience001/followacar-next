@@ -1,34 +1,30 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@libsql/client';
 
 export async function GET() {
-  const rawUrl = process.env.TURSO_URL ?? '';
-  const rawToken = process.env.TURSO_TOKEN ?? '';
-  const url = rawUrl.trim();
-  const token = rawToken.trim();
+  const url = (process.env.TURSO_URL ?? '').replace(/^libsql:\/\//, 'https://');
+  const token = process.env.TURSO_TOKEN ?? '';
 
-  const diag = {
-    url_set: !!rawUrl,
-    url_len: rawUrl.length,
-    url_trimmed_len: url.length,
-    url_prefix: url.slice(0, 30),
-    token_set: !!rawToken,
-    token_len: rawToken.length,
-    token_trimmed_len: token.length,
-    vercel_env: process.env.VERCEL_ENV ?? 'local',
-  };
-
-  if (!url) return NextResponse.json({ ok: false, error: 'TURSO_URL not set', diag });
-  if (!token) return NextResponse.json({ ok: false, error: 'TURSO_TOKEN not set', diag });
+  if (!url) return NextResponse.json({ ok: false, error: 'TURSO_URL not set' });
+  if (!token) return NextResponse.json({ ok: false, error: 'TURSO_TOKEN not set' });
 
   try {
-    const client = createClient({
-      url: url,
-      authToken: token,
+    const res = await fetch(`${url}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          { type: 'execute', stmt: { sql: 'SELECT 1 AS ok', args: [] } },
+          { type: 'close' },
+        ],
+      }),
     });
-    const res = await client.execute('SELECT 1 AS ok');
-    return NextResponse.json({ ok: true, row: res.rows[0], diag });
+    const text = await res.text();
+    if (!res.ok) return NextResponse.json({ ok: false, status: res.status, body: text });
+    return NextResponse.json({ ok: true, status: res.status, url_prefix: url.slice(0, 40) });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: String(e), diag });
+    return NextResponse.json({ ok: false, error: String(e) });
   }
 }
