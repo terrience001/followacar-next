@@ -696,9 +696,8 @@ function bootApp(lang: Lang) {
   }
   function initRecording(){
     if(!(window as any).MediaRecorder||!navigator.mediaDevices?.getUserMedia){
-      el('rec-label').style.display='none';el('rec-btn').style.display='none';el('rec-list').style.display='none';return;
+      el('rec-btn').style.display='none';el('rec-list').style.display='none';return;
     }
-    el('rec-label').textContent=tr('recordings','🎙 錄音');
     updateRecBtn();
     el('rec-btn').onclick=()=>recRecorder?recStop():recStart();
     refreshRecList();
