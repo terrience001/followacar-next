@@ -1,10 +1,13 @@
 import { createClient, type InValue } from '@libsql/client';
 
 function createDb() {
-  const url = process.env.TURSO_URL ?? '';
-  const authToken = process.env.TURSO_TOKEN ?? '';
+  const url = (process.env.TURSO_URL ?? '').trim();
+  const authToken = (process.env.TURSO_TOKEN ?? '').trim();
   if (!url) throw new Error('TURSO_URL env var is not set');
   if (!authToken) throw new Error('TURSO_TOKEN env var is not set');
+  if (!/^(libsql|wss?|https?):\/\//.test(url)) {
+    throw new Error(`TURSO_URL has invalid scheme (expected libsql:// or https://). Got prefix: ${JSON.stringify(url.slice(0, 20))}`);
+  }
   const client = createClient({ url, authToken });
 
   return async function db(strings: TemplateStringsArray, ...values: InValue[]) {
@@ -26,10 +29,13 @@ let schemaPromise: Promise<void> | null = null;
 
 export function ensureMigrated(): Promise<void> {
   if (schemaPromise) return schemaPromise;
-  const url = process.env.TURSO_URL ?? '';
-  const authToken = process.env.TURSO_TOKEN ?? '';
+  const url = (process.env.TURSO_URL ?? '').trim();
+  const authToken = (process.env.TURSO_TOKEN ?? '').trim();
   if (!url) throw new Error('TURSO_URL env var is not set');
   if (!authToken) throw new Error('TURSO_TOKEN env var is not set');
+  if (!/^(libsql|wss?|https?):\/\//.test(url)) {
+    throw new Error(`TURSO_URL has invalid scheme (expected libsql:// or https://). Got prefix: ${JSON.stringify(url.slice(0, 20))}`);
+  }
   const client = createClient({ url, authToken });
   schemaPromise = client.batch([
     { sql: `CREATE TABLE IF NOT EXISTS rooms (
