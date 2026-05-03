@@ -458,15 +458,21 @@ function bootApp(lang: Lang) {
   function updateMembersVoice(){updateMembersList(lastMemberList);}
 
   const photoIndex: Record<number,{from:string,url:string,created_at?:string}>={};
+  const photoDismissed=new Set<number>(JSON.parse(localStorage.getItem('photoDismissed')||'[]'));
+  function persistDismissed(){localStorage.setItem('photoDismissed',JSON.stringify([...photoDismissed]));}
   function addPhotoThumb(p: {id:number,from_name?:string,from?:string,url:string,created_at?:string}){
     const id=Number(p.id),from=p.from_name||p.from||'';
-    if(!id||photoIndex[id])return;
+    if(!id||photoIndex[id]||photoDismissed.has(id))return;
     photoIndex[id]={from,url:p.url,created_at:p.created_at};
     const thumbs=el('photo-thumbs');
+    const wrap=document.createElement('div');wrap.className='photo-thumb-wrap';wrap.dataset.photoId=String(id);
     const img=document.createElement('img');img.className='photo-thumb';img.src=p.url;img.alt='';
     img.title=from+(p.created_at?` · ${p.created_at}`:'');
     img.onclick=()=>openPhotoViewer(id);
-    thumbs.insertBefore(img,thumbs.firstChild);
+    const close=document.createElement('button');close.className='photo-thumb-close';close.textContent='×';close.title='Hide';
+    close.onclick=(e)=>{e.stopPropagation();photoDismissed.add(id);persistDismissed();wrap.remove();};
+    wrap.appendChild(img);wrap.appendChild(close);
+    thumbs.insertBefore(wrap,thumbs.firstChild);
     while(thumbs.children.length>20)thumbs.lastChild?.remove();
   }
   function openPhotoViewer(id: number){
