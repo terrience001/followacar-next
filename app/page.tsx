@@ -603,13 +603,21 @@ function bootApp(lang: Lang) {
     if(coords){btn.textContent=tr('saving','Saving…');const res=await saveDestCoords(coords.lat,coords.lng,label);btn.textContent=tr('confirm','Confirm');if(res.ok)closeDestDialog();else{errEl.textContent=res.error||tr('saving','Save failed');errEl.style.display='';}}
     else{errEl.textContent=tr('noCoordInLink','Cannot parse coordinates from link, switch to enter coords mode');errEl.style.display='';}
   };
+  let lastDestKey='';
   function updateDestination(dest: any){
-    if(!dest){destMarker?.remove();destMarker=null;return;}
+    if(!dest){destMarker?.remove();destMarker=null;lastDestKey='';return;}
     const ll=[parseFloat(dest.lat),parseFloat(dest.lng)];
     const icon=L.divIcon({className:'',html:`<div class="dest-label">🏁 ${escHtml(dest.label)}</div>`,iconAnchor:[0,10]});
     const popup=`<b>🏁 ${escHtml(dest.label)}</b><br><a href="https://maps.google.com/?daddr=${dest.lat},${dest.lng}" target="_blank" rel="noopener" style="display:inline-block;margin-top:.4rem;padding:.3rem .7rem;background:#f59e0b;color:#000;border-radius:6px;font-weight:700;text-decoration:none;font-size:.85rem">${tr('navigate','🧭 Navigate')}</a>`;
     if(destMarker){destMarker.setLatLng(ll);destMarker.setIcon(icon);destMarker.setPopupContent(popup);}
     else{destMarker=L.marker(ll,{icon}).addTo(map).bindPopup(popup);}
+    const key=`${dest.lat},${dest.lng}`;
+    if(key!==lastDestKey){
+      lastDestKey=key;
+      const pts=Object.values(markers).map((m: any)=>m.getLatLng()).concat([destMarker.getLatLng()]);
+      if(pts.length===1)map.setView(pts[0],15);
+      else map.fitBounds(L.latLngBounds(pts),{padding:[60,60],maxZoom:16});
+    }
   }
 
   let lastMsgId=0;
