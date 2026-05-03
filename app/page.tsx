@@ -132,6 +132,7 @@ export default function Home() {
       {/* App */}
       <div id="app">
         <div id="map"></div>
+        <button id="logout-btn" style={{position:'absolute',top:'.5rem',right:'.5rem',zIndex:600,background:'rgba(248,113,113,0.92)',color:'#0f172a',border:'1.5px solid #7f1d1d',borderRadius:'8px',padding:'.3rem .7rem',fontSize:'.78rem',fontWeight:700,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,.4)'}}>{t.logout}</button>
         <div id="gps-bar">
           <span id="gps-txt">{t.waitingGps}</span>
           <button id="dest-btn">{t.setDest}</button>
@@ -162,7 +163,6 @@ export default function Home() {
                   <span id="my-avatar-ph" style={{fontSize:'1.5rem',pointerEvents:'none'}}>👤</span>
                   <img id="my-avatar-img" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',display:'none',borderRadius:'50%',pointerEvents:'none'}} alt="" />
                   <div id="my-voice-badge" style={{position:'absolute',bottom:-2,right:-2,background:'#0f172a',borderRadius:'50%',width:'20px',height:'20px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',border:'1.5px solid #1e293b',pointerEvents:'none'}}>📷</div>
-                  <button id="logout-btn" title="" style={{position:'absolute',top:-4,right:-4,width:'18px',height:'18px',borderRadius:'50%',background:'#f87171',color:'#0f172a',border:'1.5px solid #1e293b',padding:0,fontSize:'11px',lineHeight:1,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>×</button>
                 </div>
                 <input type="file" id="avatar-input" accept="image/*" style={{display:'none'}} />
               </div>
