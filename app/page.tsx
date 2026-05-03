@@ -382,14 +382,17 @@ function bootApp(lang: Lang) {
   let wakeLock: any=null;
   async function requestWakeLock(){if(!('wakeLock' in navigator))return;try{wakeLock=await (navigator as any).wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});}catch(e){}}
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&wakeLock===null)requestWakeLock();});
+  let lastLat: number|null=null,lastLng: number|null=null;
   function startGPS(){
     if(!navigator.geolocation){setGpsBar('err',tr('gpsPermDenied','Location unavailable'));return;}
     setGpsBar('','📍 …');requestWakeLock();
     navigator.geolocation.watchPosition(
-      pos=>{setGpsBar('ok',`📍 ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}  ±${Math.round(pos.coords.accuracy)}m`);postLocation(pos.coords.latitude,pos.coords.longitude);},
+      pos=>{lastLat=pos.coords.latitude;lastLng=pos.coords.longitude;setGpsBar('ok',`📍 ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}  ±${Math.round(pos.coords.accuracy)}m`);postLocation(pos.coords.latitude,pos.coords.longitude);},
       err=>{const m: Record<number,string>={1:tr('gpsPermDenied','Location denied'),2:tr('gpsNoSignal','No location signal'),3:tr('gpsTimeout','Location timeout')};setGpsBar('err','❌ '+(m[err.code]||err.message));},
       {enableHighAccuracy:true,timeout:15000,maximumAge:5000}
     );
+    setInterval(()=>{if(lastLat!=null&&lastLng!=null)postLocation(lastLat,lastLng);},60000);
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lastLat!=null&&lastLng!=null)postLocation(lastLat,lastLng);});
   }
   function setGpsBar(cls: string,txt: string){el('gps-bar').className=cls;el('gps-txt').textContent=txt;}
   function postLocation(lat: number,lng: number){
