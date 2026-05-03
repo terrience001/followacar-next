@@ -944,15 +944,63 @@ function bootApp(lang: Lang) {
     const dc=pc.createDataChannel('loc');setupDC(target,dc);
     const offer=await pc.createOffer();await pc.setLocalDescription(offer);sendSignal(target,JSON.stringify({type:'voice-offer',sdp:offer.sdp}));
   }
+  const reconnectTimers: Record<string,any>={};
+  function clearReconnectTimer(name: string){if(reconnectTimers[name]){clearTimeout(reconnectTimers[name]);delete reconnectTimers[name];}}
+  async function tryIceRestart(name: string){
+    const pc=peers[name];if(!pc||peerRoles[name]!=='caller')return;
+    try{
+      const offer=await pc.createOffer({iceRestart:true});
+      await pc.setLocalDescription(offer);
+      sendSignal(name,JSON.stringify({type:'voice-offer',sdp:offer.sdp}));
+    }catch{}
+  }
+  function shouldStillBeConnected(name: string){
+    return inCall && voiceStatus[name]?.inCall && lastMemberList.some((p: any)=>p.name===name&&isOnline(p.ts));
+  }
   function createPC(name: string){
     hangupPeer(name);const pc=new RTCPeerConnection(STUN);peers[name]=pc;
     pc.onicecandidate=(e: RTCPeerConnectionIceEvent)=>{if(e.candidate)sendSignal(name,JSON.stringify({type:'candidate',candidate:e.candidate}));};
     pc.ontrack=(e: RTCTrackEvent)=>{if(e.track.kind==='audio'){remoteStreams[name]=e.streams[0];playAudio(name,e.streams[0]);recAttachRemote(name,e.streams[0]);}};
     pc.ondatachannel=(e: RTCDataChannelEvent)=>setupDC(name,e.channel);
-    pc.onconnectionstatechange=()=>{if(['disconnected','failed','closed'].includes(pc.connectionState)){hangupPeer(name);updatePeerStatus();}};
+    pc.onconnectionstatechange=()=>{
+      const st=pc.connectionState;
+      if(st==='connected'){clearReconnectTimer(name);updatePeerStatus();return;}
+      if(st==='closed'){clearReconnectTimer(name);hangupPeer(name);updatePeerStatus();return;}
+      if(st==='disconnected'){
+        clearReconnectTimer(name);
+        reconnectTimers[name]=setTimeout(()=>{
+          delete reconnectTimers[name];
+          if(peers[name]!==pc)return;
+          if(pc.connectionState==='connected')return;
+          if(!shouldStillBeConnected(name)){hangupPeer(name);updatePeerStatus();return;}
+          tryIceRestart(name);
+          reconnectTimers[name]=setTimeout(()=>{
+            delete reconnectTimers[name];
+            if(peers[name]!==pc)return;
+            if(pc.connectionState==='connected')return;
+            hangupPeer(name);updatePeerStatus();
+            if(shouldStillBeConnected(name))callPeer(name);
+          },5000);
+        },5000);
+        return;
+      }
+      if(st==='failed'){
+        clearReconnectTimer(name);
+        if(!shouldStillBeConnected(name)){hangupPeer(name);updatePeerStatus();return;}
+        if(peerRoles[name]==='caller')tryIceRestart(name);
+        reconnectTimers[name]=setTimeout(()=>{
+          delete reconnectTimers[name];
+          if(peers[name]!==pc)return;
+          if(pc.connectionState==='connected')return;
+          hangupPeer(name);updatePeerStatus();
+          if(shouldStillBeConnected(name))callPeer(name);
+        },5000);
+        return;
+      }
+    };
     return pc;
   }
-  function hangupPeer(name: string){peers[name]?.close();delete peers[name];delete peerRoles[name];removeAudio(name);delete remoteStreams[name];delete dataChannels[name];}
+  function hangupPeer(name: string){clearReconnectTimer(name);peers[name]?.close();delete peers[name];delete peerRoles[name];removeAudio(name);delete remoteStreams[name];delete dataChannels[name];}
   async function handleSignal(sig: any){
     const data=JSON.parse(sig.data),from=sig.from_name;
     if(data.type==='call-join'){voiceStatus[from]={inCall:true,muted:false};if(inCall&&!peers[from])callPeer(from);updateMembersVoice();}
