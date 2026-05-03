@@ -132,7 +132,7 @@ export default function Home() {
       {/* App */}
       <div id="app">
         <div id="map"></div>
-        <button id="logout-btn" style={{position:'absolute',top:'.5rem',right:'.5rem',zIndex:600,background:'rgba(248,113,113,0.92)',color:'#0f172a',border:'1.5px solid #7f1d1d',borderRadius:'8px',padding:'.3rem .7rem',fontSize:'.78rem',fontWeight:700,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,.4)'}}>{t.logout}</button>
+        <button id="logout-btn" style={{position:'absolute',top:'2.6rem',right:'.5rem',zIndex:600,background:'rgba(248,113,113,0.92)',color:'#0f172a',border:'1.5px solid #7f1d1d',borderRadius:'8px',padding:'.3rem .7rem',fontSize:'.78rem',fontWeight:700,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,.4)'}}>{t.logout}</button>
         <div id="gps-bar">
           <span id="gps-txt">{t.waitingGps}</span>
           <button id="dest-btn">{t.setDest}</button>
