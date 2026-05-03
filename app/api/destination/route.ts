@@ -17,8 +17,20 @@ export async function POST(req: NextRequest) {
   const lat   = (data.get('lat')   as string ?? '').trim();
   const lng   = (data.get('lng')   as string ?? '').trim();
   const url   = (data.get('url')   as string ?? '').trim();
+  const place = (data.get('place') as string ?? '').trim();
 
   if (!room) return NextResponse.json({ ok: false, error: 'missing room' });
+
+  // Place name geocoding
+  if (place) {
+    const geo = await geocodeAny(place);
+    if (!geo) return NextResponse.json({ ok: false, error: '找不到這個地點' });
+    await db`
+      INSERT INTO destination (room_id, lat, lng, label) VALUES (${room}, ${geo.lat}, ${geo.lng}, ${label})
+      ON CONFLICT (room_id) DO UPDATE SET lat = excluded.lat, lng = excluded.lng, label = excluded.label, updated_at = datetime('now')
+    `;
+    return NextResponse.json({ ok: true, lat: geo.lat, lng: geo.lng });
+  }
 
   // Direct coordinate input
   if (lat && lng && !url) {

@@ -206,7 +206,7 @@ export default function Home() {
           <h3>{t.setDestTitle}</h3>
           <div className="dest-mode-toggle">
             <button className="dest-mode-btn active" id="dest-mode-url">{t.pasteLink}</button>
-            <button className="dest-mode-btn" id="dest-mode-coord">{t.enterCoord}</button>
+            <button className="dest-mode-btn" id="dest-mode-coord">📍 輸入地點</button>
             <button className="dest-mode-btn" id="dest-mode-pin">📍 點地圖</button>
           </div>
           <div id="dest-url-section">
@@ -214,8 +214,8 @@ export default function Home() {
             <input id="dest-url" placeholder="https://www.google.com/maps/…" autoComplete="off" spellCheck={false} />
           </div>
           <div id="dest-coord-section" style={{display:'none'}}>
-            <p style={{marginBottom:'.35rem'}}>{t.coordInstruct}</p>
-            <input id="dest-coord" placeholder={t.coordPlaceholder} autoComplete="off" inputMode="decimal" spellCheck={false} />
+            <p style={{marginBottom:'.35rem'}}>輸入地點名稱、地址或店名</p>
+            <input id="dest-coord" placeholder="例：東京鐵塔 / 鹿兒島市役所" autoComplete="off" spellCheck={false} />
           </div>
           <input id="dest-name" placeholder={t.destName} autoComplete="off" />
           <div id="dest-err" style={{display:'none'}}></div>
@@ -603,11 +603,13 @@ function bootApp(lang: Lang) {
     const label=el<HTMLInputElement>('dest-name').value.trim()||'🏁';
     const errEl=el('dest-err');errEl.style.display='none';const btn=el<HTMLButtonElement>('dest-confirm');
     if(destInputMode==='coord'){
-      const raw=el<HTMLInputElement>('dest-coord').value.trim();
-      const m=raw.match(/(-?\d+\.\d+)[^\d\-]+(-?\d+\.\d+)/);
-      if(!m){errEl.textContent=tr('badCoordFormat','Invalid format, e.g. (38.7427938, 140.7432556)');errEl.style.display='';return;}
-      btn.textContent=tr('saving','Saving…');const res=await saveDestCoords(m[1],m[2],label);btn.textContent=tr('confirm','Confirm');
-      if(res.ok)closeDestDialog();else{errEl.textContent=res.error||tr('saving','Save failed');errEl.style.display='';}
+      const place=el<HTMLInputElement>('dest-coord').value.trim();
+      if(!place){errEl.textContent='請輸入地點';errEl.style.display='';return;}
+      btn.textContent=tr('saving','Saving…');
+      const fd=new FormData();fd.append('room',ROOM);fd.append('place',place);fd.append('label',label);
+      const res=await fetch('/api/destination',{method:'POST',body:fd}).then(r=>r.json()).catch(()=>({ok:false}));
+      btn.textContent=tr('confirm','Confirm');
+      if(res.ok)closeDestDialog();else{errEl.textContent=res.error||'找不到這個地點';errEl.style.display='';}
       return;
     }
     const url=el<HTMLInputElement>('dest-url').value.trim();
