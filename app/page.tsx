@@ -214,8 +214,9 @@ export default function Home() {
             <input id="dest-url" placeholder="https://www.google.com/maps/…" autoComplete="off" spellCheck={false} />
           </div>
           <div id="dest-coord-section" style={{display:'none'}}>
-            <p style={{marginBottom:'.35rem'}}>輸入地點名稱、地址或店名</p>
+            <p style={{marginBottom:'.35rem'}}>搜尋地點（自動建議）</p>
             <input id="dest-coord" placeholder="例：東京鐵塔 / 鹿兒島市役所" autoComplete="off" spellCheck={false} />
+            <div id="dest-suggest" style={{display:'none',background:'#0f172a',border:'1px solid #334155',borderRadius:'8px',marginTop:'.3rem',maxHeight:'220px',overflowY:'auto'}}></div>
           </div>
           <input id="dest-name" placeholder={t.destName} autoComplete="off" />
           <div id="dest-err" style={{display:'none'}}></div>
@@ -548,6 +549,16 @@ function bootApp(lang: Lang) {
   el('dest-mode-url').onclick=()=>setDestMode('url');
   el('dest-mode-coord').onclick=()=>setDestMode('coord');
   el('dest-mode-pin').onclick=()=>startPinPicking();
+  el<HTMLInputElement>('dest-coord').addEventListener('input',(e: any)=>{
+    selectedPlaceId='';
+    const q=(e.target.value||'').trim();
+    clearTimeout(suggestTimer);
+    if(q.length<2){el('dest-suggest').style.display='none';return;}
+    suggestTimer=setTimeout(()=>fetchSuggestions(q),300);
+  });
+  document.addEventListener('click',(e: any)=>{
+    if(!el('dest-coord-section').contains(e.target))el('dest-suggest').style.display='none';
+  });
   function setDestMode(mode: string){
     destInputMode=mode;
     el('dest-mode-url').classList.toggle('active',mode==='url');
@@ -556,6 +567,30 @@ function bootApp(lang: Lang) {
     el('dest-url-section').style.display=mode==='url'?'':'none';
     el('dest-coord-section').style.display=mode==='coord'?'':'none';
     el('dest-err').style.display='none';
+    if(mode!=='coord'){el('dest-suggest').style.display='none';selectedPlaceId='';}
+  }
+  let selectedPlaceId='',suggestTimer: any=null,suggestSeq=0;
+  async function fetchSuggestions(q: string){
+    const seq=++suggestSeq;
+    const list=await fetch(`/api/place/search?q=${encodeURIComponent(q)}`).then(r=>r.json()).catch(()=>[]) as Array<{place_id:string,main:string,secondary:string}>;
+    if(seq!==suggestSeq)return;
+    const box=el('dest-suggest');box.innerHTML='';
+    if(!list.length){box.style.display='none';return;}
+    list.forEach(p=>{
+      const row=document.createElement('div');
+      row.style.cssText='padding:.5rem .7rem;cursor:pointer;border-bottom:1px solid #1e293b;font-size:.85rem;color:#f1f5f9';
+      row.innerHTML=`<div>${escHtml(p.main)}</div>${p.secondary?`<div style="font-size:.72rem;color:#64748b;margin-top:.15rem">${escHtml(p.secondary)}</div>`:''}`;
+      row.onmouseenter=()=>row.style.background='#1e293b';
+      row.onmouseleave=()=>row.style.background='';
+      row.onclick=()=>{
+        selectedPlaceId=p.place_id;
+        el<HTMLInputElement>('dest-coord').value=p.main;
+        if(!el<HTMLInputElement>('dest-name').value.trim())el<HTMLInputElement>('dest-name').value=p.main;
+        box.style.display='none';
+      };
+      box.appendChild(row);
+    });
+    box.style.display='block';
   }
   let pinClickHandler: any=null;
   function startPinPicking(){
@@ -606,7 +641,9 @@ function bootApp(lang: Lang) {
       const place=el<HTMLInputElement>('dest-coord').value.trim();
       if(!place){errEl.textContent='請輸入地點';errEl.style.display='';return;}
       btn.textContent=tr('saving','Saving…');
-      const fd=new FormData();fd.append('room',ROOM);fd.append('place',place);fd.append('label',label);
+      const fd=new FormData();fd.append('room',ROOM);fd.append('label',label);
+      if(selectedPlaceId)fd.append('place_id',selectedPlaceId);
+      else fd.append('place',place);
       const res=await fetch('/api/destination',{method:'POST',body:fd}).then(r=>r.json()).catch(()=>({ok:false}));
       btn.textContent=tr('confirm','Confirm');
       if(res.ok)closeDestDialog();else{errEl.textContent=res.error||'找不到這個地點';errEl.style.display='';}

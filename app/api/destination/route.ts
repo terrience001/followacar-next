@@ -18,8 +18,21 @@ export async function POST(req: NextRequest) {
   const lng   = (data.get('lng')   as string ?? '').trim();
   const url   = (data.get('url')   as string ?? '').trim();
   const place = (data.get('place') as string ?? '').trim();
+  const placeId = (data.get('place_id') as string ?? '').trim();
 
   if (!room) return NextResponse.json({ ok: false, error: 'missing room' });
+
+  // Place ID → Place Details (most precise)
+  if (placeId) {
+    const det = await placeDetails(placeId);
+    if (!det) return NextResponse.json({ ok: false, error: '找不到這個地點' });
+    const finalLabel = label === '目的地' && det.name ? det.name : label;
+    await db`
+      INSERT INTO destination (room_id, lat, lng, label) VALUES (${room}, ${det.lat}, ${det.lng}, ${finalLabel})
+      ON CONFLICT (room_id) DO UPDATE SET lat = excluded.lat, lng = excluded.lng, label = excluded.label, updated_at = datetime('now')
+    `;
+    return NextResponse.json({ ok: true, lat: det.lat, lng: det.lng });
+  }
 
   // Place name geocoding
   if (place) {
@@ -100,6 +113,23 @@ function extractPlaceName(url: string): string | null {
     if (!q) return null;
     if (/^-?\d+\.\d+\s*,\s*-?\d+\.\d+$/.test(q)) return null;
     return q.trim();
+  } catch { return null; }
+}
+
+async function placeDetails(placeId: string): Promise<{lat: string, lng: string, name?: string} | null> {
+  const key = process.env.GOOGLE_MAPS_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=zh-TW`, {
+      headers: {
+        'X-Goog-Api-Key': key,
+        'X-Goog-FieldMask': 'location,displayName',
+      },
+    });
+    if (!res.ok) return null;
+    const json = await res.json() as { location?: { latitude: number, longitude: number }, displayName?: { text?: string } };
+    if (!json.location) return null;
+    return { lat: String(json.location.latitude), lng: String(json.location.longitude), name: json.displayName?.text };
   } catch { return null; }
 }
 
