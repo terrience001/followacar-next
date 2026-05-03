@@ -631,10 +631,12 @@ function bootApp(lang: Lang) {
       e.stopPropagation();
       if(!confirm(tr('logoutConfirm','Are you sure you want to leave the room?')))return;
       if(inCall)leaveGroupCall();
+      sendLeaveBeacon();
       localStorage.removeItem('room');localStorage.removeItem('name');
       sessionStorage.removeItem('room');sessionStorage.removeItem('name');
       location.href=location.origin;
     };
+    window.addEventListener('pagehide',sendLeaveBeacon);
     initRecording();
   }
 
@@ -855,6 +857,7 @@ function bootApp(lang: Lang) {
   function removeAudio(name: string){audioEls[name]?.remove();delete audioEls[name];}
   function sendSignal(to: string,data: string){const fd=new FormData();fd.append('room',ROOM);fd.append('from',ME);fd.append('to',to);fd.append('data',data);fetch('/api/signal',{method:'POST',body:fd});}
   function broadcastSignal(data: string){const fd=new FormData();fd.append('room',ROOM);fd.append('from',ME);fd.append('to','*');fd.append('data',data);fetch('/api/signal',{method:'POST',body:fd});}
+  function sendLeaveBeacon(){if(!ROOM||!ME)return;const fd=new FormData();fd.append('room',ROOM);fd.append('name',ME);try{navigator.sendBeacon('/api/room/leave',fd);}catch{}}
 
   function startPolling(){
     restoreMyAvatar();loadAvatars();loadPhotos();
