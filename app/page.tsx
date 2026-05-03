@@ -488,6 +488,21 @@ function bootApp(lang: Lang) {
       list.slice().reverse().forEach(addPhotoThumb);
     }catch{}
   }
+  function compressPhoto(file: File):Promise<Blob>{
+    return new Promise((resolve,reject)=>{
+      const img=new Image(),url=URL.createObjectURL(file);
+      img.onload=()=>{
+        URL.revokeObjectURL(url);
+        const MAX=1600;let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d')!.drawImage(img,0,0,w,h);
+        c.toBlob(b=>b?(b.size<file.size?resolve(b):resolve(file)):reject(new Error('toBlob failed')),'image/jpeg',0.85);
+      };
+      img.onerror=()=>{URL.revokeObjectURL(url);resolve(file);};
+      img.src=url;
+    });
+  }
   el('share-photo-btn').onclick=()=>el('photo-input').click();
   el<HTMLInputElement>('photo-input').onchange=async(e: any)=>{
     const file=e.target.files?.[0];e.target.value='';
@@ -495,7 +510,8 @@ function bootApp(lang: Lang) {
     const btn=el('share-photo-btn') as HTMLButtonElement;
     const orig=btn.textContent;btn.disabled=true;btn.textContent='⏳';
     try{
-      const fd=new FormData();fd.append('room',ROOM);fd.append('from',ME);fd.append('file',file);
+      const blob=file.type.startsWith('image/')?await compressPhoto(file):file;
+      const fd=new FormData();fd.append('room',ROOM);fd.append('from',ME);fd.append('file',blob,'photo.jpg');
       const res=await fetch('/api/photo',{method:'POST',body:fd}).then(r=>r.json());
       if(!res.ok){alert(tr('uploadFailed','Upload failed: ')+(res.error||'unknown'));return;}
       addPhotoThumb({id:res.id,from_name:ME,url:res.url});
