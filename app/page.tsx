@@ -230,6 +230,11 @@ function bootApp(lang: Lang) {
   const PALETTE=['#f87171','#fb923c','#facc15','#4ade80','#38bdf8','#a78bfa','#f472b6','#34d399','#60a5fa','#fbbf24'];
   function nameColor(n: string){let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;return PALETTE[h%PALETTE.length];}
   function escHtml(s: string){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmtTpeTime(utc: string){
+    if(!utc)return'';
+    const d=new Date(utc.replace(' ','T')+'Z');if(isNaN(d.getTime()))return'';
+    return d.toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit',timeZone:'Asia/Taipei'});
+  }
   function linkify(s: string){
     const re=/\b((?:https?:\/\/|www\.)[^\s<]+)/gi;
     let out='',last=0,m: RegExpExecArray|null;
@@ -633,7 +638,7 @@ function bootApp(lang: Lang) {
     const text=input.value.trim();if(!text)return;input.value='';
     const box=el('chat-msgs');
     const div=document.createElement('div');div.className='msg';div.style.opacity='0.5';
-    div.innerHTML=`<span class="who" style="color:${nameColor(ME)}">${escHtml(ME)}</span>${linkify(text)}`;
+    div.innerHTML=`<span class="who" style="color:${nameColor(ME)}">${escHtml(ME)}</span>${linkify(text)}<span class="ts">${fmtTpeTime(new Date().toISOString().replace('T',' ').slice(0,19))}</span>`;
     box.appendChild(div);box.scrollTop=box.scrollHeight;
     const fd=new FormData();fd.append('room',ROOM);fd.append('name',ME);fd.append('content',text);
     fetch('/api/message',{method:'POST',body:fd}).then(r=>r.json()).then(res=>{
@@ -909,7 +914,7 @@ function bootApp(lang: Lang) {
     function applyMessages(list: any[]){
       if(!list?.length)return;const box=el('chat-msgs');
       let hasIncoming=false;
-      list.forEach(m=>{const id=parseInt(m.id);if(id<=lastMsgId)return;lastMsgId=id;if(m.name!==ME)hasIncoming=true;const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${linkify(m.content)}`;box.appendChild(div);});
+      list.forEach(m=>{const id=parseInt(m.id);if(id<=lastMsgId)return;lastMsgId=id;if(m.name!==ME)hasIncoming=true;const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${linkify(m.content)}<span class="ts">${fmtTpeTime(m.created_at)}</span>`;box.appendChild(div);});
       box.scrollTop=box.scrollHeight;
       if(msgsInitialized&&hasIncoming&&!el('tab-chat').classList.contains('active')){
         const tab=document.querySelector('.tab[data-tab="chat"]') as HTMLElement|null;

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const [messages, locations, signals, destinationRows] = await Promise.all([
     db`
-      SELECT id, name, content FROM messages
+      SELECT id, name, content, created_at FROM messages
       WHERE room_id = ${room} AND id > ${sinceMsg}
       ORDER BY id ASC LIMIT 50
     `,

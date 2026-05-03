@@ -53,6 +53,7 @@ input,textarea{touch-action:manipulation}
 #chat-msgs{flex:1;overflow-y:auto;padding:.5rem .75rem;display:flex;flex-direction:column;gap:.3rem;min-height:0}
 .msg{font-size:.85rem;line-height:1.5;word-break:break-all}
 .msg .who{font-weight:700;margin-right:.4rem}
+.msg .ts{margin-left:.4rem;font-size:.65rem;color:#64748b;font-weight:400}
 #chat-form{display:flex;gap:.5rem;padding:.5rem;border-top:1px solid #334155;flex-shrink:0}
 #chat-input{flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#f1f5f9;padding:.45rem .7rem;font-size:16px;outline:none}
 #chat-input:focus{border-color:#38bdf8}

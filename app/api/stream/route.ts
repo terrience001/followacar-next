@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
       while (!closed && Date.now() - startedAt < MAX_DURATION_MS) {
         try {
           const [messages, locations, signals, destinationRows] = await Promise.all([
-            tursoQuery(`SELECT id, name, content FROM messages WHERE room_id = ? AND id > ? ORDER BY id ASC LIMIT 50`, [room, lastMsgId]),
+            tursoQuery(`SELECT id, name, content, created_at FROM messages WHERE room_id = ? AND id > ? ORDER BY id ASC LIMIT 50`, [room, lastMsgId]),
             tursoQuery(`SELECT name, lat, lng, CAST(strftime('%s', updated_at) AS INTEGER) AS ts FROM participants WHERE room_id = ? AND updated_at > datetime('now', '-30 minutes') ORDER BY name`, [room]),
             me ? tursoQuery(`SELECT id, from_name, data FROM signals WHERE room_id = ? AND to_name = ? AND id > ? ORDER BY id ASC`, [room, me, lastSigId]) : Promise.resolve([]),
             tursoQuery(`SELECT lat, lng, label FROM destination WHERE room_id = ?`, [room]),
