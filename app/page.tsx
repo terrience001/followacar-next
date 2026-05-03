@@ -445,7 +445,7 @@ function bootApp(lang: Lang) {
     });
     Object.keys(markers).forEach(n=>{if(!active.has(n)){markers[n].remove();delete markers[n];}});
     Object.keys(voiceStatus).forEach(n=>{if(n!==ME&&!active.has(n)){delete voiceStatus[n];if(peers[n]){hangupPeer(n);updatePeerStatus();}}});
-    if(!destMode){const pts=Object.values(markers).map((m: any)=>m.getLatLng());if(pts.length===1)map.setView(pts[0],15);else if(pts.length>1)map.fitBounds(L.latLngBounds(pts),{padding:[40,40]});}
+    if(!destMode){const pts=Object.values(markers).map((m: any)=>m.getLatLng());if(destMarker)pts.push(destMarker.getLatLng());if(pts.length===1)map.setView(pts[0],15);else if(pts.length>1)map.fitBounds(L.latLngBounds(pts),{padding:[60,60],maxZoom:16});}
     updateMembersList(list);
   }
   function updateMembersList(list: any[]){
