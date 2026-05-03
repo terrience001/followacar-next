@@ -172,7 +172,6 @@ export default function Home() {
                 <button id="rec-btn"></button>
               </div>
               <div id="rec-list"></div>
-              <div className="peer-status" id="peer-status"></div>
             </div>
           </div>
         </div>
@@ -858,7 +857,7 @@ function bootApp(lang: Lang) {
     }else if(data.type==='voice-answer'){await peers[from]?.setRemoteDescription({type:'answer',sdp:data.sdp});updatePeerStatus();}
     else if(data.type==='candidate'){await peers[from]?.addIceCandidate(data.candidate);}
   }
-  function updatePeerStatus(){const box=el('peer-status');box.innerHTML='';Object.keys(peers).forEach(n=>{const t=document.createElement('span');t.className='peer-tag in-call';t.style.borderColor=nameColor(n);t.style.color=nameColor(n);t.textContent='🎙 '+n;box.appendChild(t);});}
+  function updatePeerStatus(){updateMembersVoice();}
   function playAudio(name: string,stream: MediaStream){removeAudio(name);const a=document.createElement('audio') as HTMLAudioElement;a.autoplay=true;a.srcObject=stream;document.body.appendChild(a);audioEls[name]=a;}
   function removeAudio(name: string){audioEls[name]?.remove();delete audioEls[name];}
   function sendSignal(to: string,data: string){const fd=new FormData();fd.append('room',ROOM);fd.append('from',ME);fd.append('to',to);fd.append('data',data);fetch('/api/signal',{method:'POST',body:fd});}
