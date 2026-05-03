@@ -550,12 +550,15 @@ function bootApp(lang: Lang) {
     };
   });
 
-  const STUN={iceServers:[
+  const STUN: {iceServers: any[]}={iceServers:[
     {urls:'stun:stun.l.google.com:19302'},
     {urls:'stun:138.2.60.1:3478'},
     {urls:'turn:138.2.60.1:3478',username:'followacar',credential:'followacar2024'},
     {urls:'turn:138.2.60.1:3478?transport=tcp',username:'followacar',credential:'followacar2024'},
   ]};
+  fetch('/api/turn-credentials').then(r=>r.json()).then(j=>{
+    if(j?.iceServers){const extra=Array.isArray(j.iceServers)?j.iceServers:[j.iceServers];STUN.iceServers.push(...extra);}
+  }).catch(()=>{});
   const peers: Record<string,any>={},peerRoles: Record<string,string>={},dataChannels: Record<string,any>={};
   const audioEls: Record<string,HTMLAudioElement>={};
   const remoteStreams: Record<string,MediaStream>={};
