@@ -150,13 +150,13 @@ export default function Home() {
           </div>
           <div className="tab-panel active" id="tab-call">
             <div id="call-panel">
-              <div style={{display:'flex',alignItems:'center',gap:'.7rem',marginBottom:'.9rem'}}>
-                <div id="my-avatar-wrap" style={{position:'relative',width:'44px',height:'44px',borderRadius:'50%',background:'#334155',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',overflow:'hidden',flexShrink:0,border:'2px solid #475569'}}>
-                  <span id="my-avatar-ph" style={{fontSize:'1.3rem',pointerEvents:'none'}}>👤</span>
-                  <img id="my-avatar-img" style={{width:'44px',height:'44px',objectFit:'cover',display:'none',borderRadius:'50%',pointerEvents:'none'}} alt="" />
-                  <div style={{position:'absolute',bottom:0,right:0,background:'#0f172a',borderRadius:'50%',width:'16px',height:'16px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',pointerEvents:'none'}}>📷</div>
+              <div id="members-row" style={{display:'flex',flexWrap:'wrap',gap:'.7rem',marginBottom:'.9rem',alignItems:'flex-start'}}>
+                <div id="my-avatar-wrap" style={{position:'relative',width:'52px',height:'52px',borderRadius:'50%',background:'#334155',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,border:'2px solid #475569'}}>
+                  <span id="my-avatar-ph" style={{fontSize:'1.5rem',pointerEvents:'none'}}>👤</span>
+                  <img id="my-avatar-img" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',display:'none',borderRadius:'50%',pointerEvents:'none'}} alt="" />
+                  <div id="my-voice-badge" style={{position:'absolute',bottom:-2,right:-2,background:'#0f172a',borderRadius:'50%',width:'20px',height:'20px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',border:'1.5px solid #1e293b',pointerEvents:'none'}}>📷</div>
+                  <button id="logout-btn" title="" style={{position:'absolute',top:-4,right:-4,width:'18px',height:'18px',borderRadius:'50%',background:'#f87171',color:'#0f172a',border:'1.5px solid #1e293b',padding:0,fontSize:'11px',lineHeight:1,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>×</button>
                 </div>
-                <span id="my-name-label" style={{fontSize:'.85rem',color:'#f1f5f9',fontWeight:600}}></span>
                 <input type="file" id="avatar-input" accept="image/*" style={{display:'none'}} />
               </div>
               <div className="call-actions">
@@ -165,12 +165,7 @@ export default function Home() {
                 <button id="rec-btn"></button>
               </div>
               <div id="rec-list"></div>
-              <div className="call-label" style={{marginTop:'.7rem'}}>{t.members}</div>
-              <div id="members-list" style={{display:'flex',flexWrap:'wrap',gap:'.4rem',marginBottom:'.5rem'}}></div>
               <div className="peer-status" id="peer-status"></div>
-              <div style={{marginTop:'1rem',borderTop:'1px solid #334155',paddingTop:'.75rem'}}>
-                <button id="logout-btn" style={{background:'transparent',color:'#f87171',border:'1px solid #f87171',borderRadius:'8px',padding:'.45rem 1rem',fontSize:'.85rem',cursor:'pointer',width:'100%'}}>{t.logout}</button>
-              </div>
             </div>
           </div>
         </div>
@@ -424,20 +419,34 @@ function bootApp(lang: Lang) {
     updateMembersList(list);
   }
   function updateMembersList(list: any[]){
-    lastMemberList=list;const box=el('members-list');box.innerHTML='';
+    lastMemberList=list;
+    updateMyVoiceBadge();
+    const row=el('members-row');
+    row.querySelectorAll('[data-member]').forEach(n=>n.remove());
     list.forEach(p=>{
+      if(p.name===ME)return;
       const online=isOnline(p.ts),visible=isVisible(p.ts),col=nameColor(p.name),vs=voiceStatus[p.name];
-      const tag=document.createElement('div');
-      tag.style.cssText=`display:flex;align-items:center;gap:.3rem;padding:.25rem .55rem;border-radius:20px;border:1px solid ${online?col:visible?'#334155':'#1e293b'};opacity:${online?1:visible?0.45:0.25}`;
+      const wrap=document.createElement('div');
+      wrap.setAttribute('data-member','1');
+      wrap.title=p.name+(online?'':visible?' (offline)':' (long offline)');
+      wrap.style.cssText=`position:relative;width:52px;height:52px;border-radius:50%;background:#334155;flex-shrink:0;border:2px solid ${online?col:'#334155'};opacity:${online?1:visible?0.5:0.3};overflow:visible`;
       const avSrc=avatarCache[p.name];
-      tag.innerHTML=(avSrc?`<img class="av-sm" src="${avSrc}" style="opacity:${online?1:0.45}">`:
-        `<div class="av-dot" style="background:${online?col:'#4b5563'};opacity:${online?1:0.45}"></div>`)
-        +`<span style="font-size:.8rem;color:${online?col:'#6b7280'}">${escHtml(p.name)}</span>`
-        +(online?'':visible?`<span style="font-size:.7rem;color:#6b7280">${tr('offline',' Offline')}</span>`:`<span style="font-size:.7rem;color:#4b5563">${tr('longOffline',' Long offline')}</span>`)
-        +(vs?.inCall?`<span style="font-size:.8rem">${vs.muted?'🔇':'🎙'}</span>`:'');
-      box.appendChild(tag);
+      wrap.innerHTML=
+        `<div style="width:100%;height:100%;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#334155">`
+        +(avSrc
+          ?`<img src="${avSrc}" style="width:100%;height:100%;object-fit:cover" alt="">`
+          :`<span style="font-size:1.1rem;color:${col};font-weight:700">${escHtml(p.name.slice(0,2))}</span>`)
+        +`</div>`
+        +(vs?.inCall
+          ?`<div style="position:absolute;bottom:-2px;right:-2px;background:#0f172a;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:12px;border:1.5px solid #1e293b">${vs.muted?'🔇':'🎙'}</div>`
+          :'');
+      row.appendChild(wrap);
     });
-    if(!list.length)box.innerHTML=`<span style="font-size:.8rem;color:#4b5563">${tr('noMembers','No members yet')}</span>`;
+  }
+  function updateMyVoiceBadge(){
+    const b=el('my-voice-badge');if(!b)return;
+    const vs=voiceStatus[ME];
+    b.textContent=vs?.inCall?(vs.muted?'🔇':'🎙'):'📷';
   }
   function updateMembersVoice(){updateMembersList(lastMemberList);}
 
@@ -566,11 +575,12 @@ function bootApp(lang: Lang) {
 
   function initCall(){
     el('my-name-label').textContent=ME;
-    el('my-avatar-wrap').onclick=()=>el('avatar-input').click();
+    el('my-avatar-wrap').onclick=(e: any)=>{if(e.target.closest('#logout-btn'))return;el('avatar-input').click();};
     el<HTMLInputElement>('avatar-input').onchange=(e: any)=>{if(e.target.files[0])uploadAvatar(e.target.files[0]);e.target.value='';};
     el('group-call-btn').onclick=async()=>inCall?leaveGroupCall():await joinGroupCall();
     el('mute-btn').onclick=()=>{muted=!muted;localStream?.getAudioTracks().forEach(t=>t.enabled=!muted);const b=el('mute-btn');b.textContent=muted?tr('unmute','🔇 Unmute'):tr('mute','🎙 Mute');b.classList.toggle('muted',muted);if(voiceStatus[ME])voiceStatus[ME].muted=muted;broadcastSignal(JSON.stringify({type:'call-mute',muted}));updateMembersVoice();};
-    el('logout-btn').onclick=()=>{
+    el('logout-btn').onclick=(e: any)=>{
+      e.stopPropagation();
       if(!confirm(tr('logoutConfirm','Are you sure you want to leave the room?')))return;
       if(inCall)leaveGroupCall();
       localStorage.removeItem('room');localStorage.removeItem('name');
