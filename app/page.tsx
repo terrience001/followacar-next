@@ -236,30 +236,30 @@ function bootApp(lang: Lang) {
   let ME='', ROOM='';
   const avatarCache: Record<string,string>={};
 
-  function compressImage(file: File):Promise<string>{
-    return new Promise(resolve=>{
+  function compressImage(file: File):Promise<Blob>{
+    return new Promise((resolve,reject)=>{
       const img=new Image(),url=URL.createObjectURL(file);
       img.onload=()=>{
         URL.revokeObjectURL(url);
-        const SIZE=72,c=document.createElement('canvas');c.width=SIZE;c.height=SIZE;
+        const SIZE=128,c=document.createElement('canvas');c.width=SIZE;c.height=SIZE;
         const ctx=c.getContext('2d')!;ctx.fillStyle='#1e293b';ctx.fillRect(0,0,SIZE,SIZE);
         const sw=Math.min(img.width,img.height),sx=(img.width-sw)/2,sy=(img.height-sw)/2;
         ctx.drawImage(img,sx,sy,sw,sw,0,0,SIZE,SIZE);
-        resolve(c.toDataURL('image/jpeg',0.65));
+        c.toBlob(b=>b?resolve(b):reject(new Error('toBlob failed')),'image/jpeg',0.8);
       };img.src=url;
     });
   }
-  function applyMyAvatar(data: string){
-    avatarCache[ME]=data;
-    const img=el<HTMLImageElement>('my-avatar-img');img.src=data;img.style.display='block';
+  function applyMyAvatar(url: string){
+    avatarCache[ME]=url;
+    const img=el<HTMLImageElement>('my-avatar-img');img.src=url;img.style.display='block';
     el('my-avatar-ph').style.display='none';
   }
   function restoreMyAvatar(){const saved=localStorage.getItem('avatar_'+ME);if(saved){applyMyAvatar(saved);updateMembersList(lastMemberList);}}
   async function uploadAvatar(file: File){
-    const data=await compressImage(file);
-    const fd=new FormData();fd.append('name',ME);fd.append('data',data);
+    const blob=await compressImage(file);
+    const fd=new FormData();fd.append('name',ME);fd.append('file',blob,'avatar.jpg');
     const res=await fetch('/api/avatar',{method:'POST',body:fd}).then(r=>r.json());
-    if(res.ok){localStorage.setItem('avatar_'+ME,data);applyMyAvatar(data);updateMembersList(lastMemberList);broadcastSignal(JSON.stringify({type:'avatar-update'}));}
+    if(res.ok&&res.url){localStorage.setItem('avatar_'+ME,res.url);applyMyAvatar(res.url);updateMembersList(lastMemberList);broadcastSignal(JSON.stringify({type:'avatar-update'}));}
     else alert(tr('uploadFailed','Upload failed: ')+(res.error||'unknown'));
   }
   function loadAvatars(){
