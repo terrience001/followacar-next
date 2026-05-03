@@ -230,6 +230,20 @@ function bootApp(lang: Lang) {
   const PALETTE=['#f87171','#fb923c','#facc15','#4ade80','#38bdf8','#a78bfa','#f472b6','#34d399','#60a5fa','#fbbf24'];
   function nameColor(n: string){let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;return PALETTE[h%PALETTE.length];}
   function escHtml(s: string){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function linkify(s: string){
+    const re=/\b((?:https?:\/\/|www\.)[^\s<]+)/gi;
+    let out='',last=0,m: RegExpExecArray|null;
+    while((m=re.exec(s))!==null){
+      out+=escHtml(s.slice(last,m.index));
+      let url=m[1];const tail=url.match(/[.,;:!?)\]]+$/);let trail='';
+      if(tail){trail=tail[0];url=url.slice(0,-trail.length);}
+      const href=url.startsWith('www.')?'https://'+url:url;
+      out+=`<a href="${escHtml(href)}" target="_blank" rel="noopener noreferrer" style="color:#7dd3fc;text-decoration:underline;word-break:break-all">${escHtml(url)}</a>${escHtml(trail)}`;
+      last=m.index+m[1].length;
+    }
+    out+=escHtml(s.slice(last));
+    return out;
+  }
   function show(id: string){(document.getElementById(id) as HTMLElement).style.display='flex';}
   function hide(id: string){(document.getElementById(id) as HTMLElement).style.display='none';}
   function el<T extends HTMLElement>(id: string){return document.getElementById(id) as T;}
@@ -611,7 +625,7 @@ function bootApp(lang: Lang) {
     const text=input.value.trim();if(!text)return;input.value='';
     const box=el('chat-msgs');
     const div=document.createElement('div');div.className='msg';div.style.opacity='0.5';
-    div.innerHTML=`<span class="who" style="color:${nameColor(ME)}">${escHtml(ME)}</span>${escHtml(text)}`;
+    div.innerHTML=`<span class="who" style="color:${nameColor(ME)}">${escHtml(ME)}</span>${linkify(text)}`;
     box.appendChild(div);box.scrollTop=box.scrollHeight;
     const fd=new FormData();fd.append('room',ROOM);fd.append('name',ME);fd.append('content',text);
     fetch('/api/message',{method:'POST',body:fd}).then(r=>r.json()).then(res=>{
@@ -887,7 +901,7 @@ function bootApp(lang: Lang) {
     function applyMessages(list: any[]){
       if(!list?.length)return;const box=el('chat-msgs');
       let hasIncoming=false;
-      list.forEach(m=>{const id=parseInt(m.id);if(id<=lastMsgId)return;lastMsgId=id;if(m.name!==ME)hasIncoming=true;const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${escHtml(m.content)}`;box.appendChild(div);});
+      list.forEach(m=>{const id=parseInt(m.id);if(id<=lastMsgId)return;lastMsgId=id;if(m.name!==ME)hasIncoming=true;const div=document.createElement('div');div.className='msg';div.innerHTML=`<span class="who" style="color:${nameColor(m.name)}">${escHtml(m.name)}</span>${linkify(m.content)}`;box.appendChild(div);});
       box.scrollTop=box.scrollHeight;
       if(msgsInitialized&&hasIncoming&&!el('tab-chat').classList.contains('active')){
         const tab=document.querySelector('.tab[data-tab="chat"]') as HTMLElement|null;
