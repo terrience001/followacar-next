@@ -671,7 +671,7 @@ function bootApp(lang: Lang) {
       sessionStorage.removeItem('room');sessionStorage.removeItem('name');
       location.href=location.origin;
     };
-    window.addEventListener('pagehide',sendLeaveBeacon);
+    window.addEventListener('pagehide',(e: PageTransitionEvent)=>{if(!e.persisted)sendLeaveBeacon();});
     initRecording();
   }
 
