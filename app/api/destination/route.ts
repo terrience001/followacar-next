@@ -34,6 +34,8 @@ export async function POST(req: NextRequest) {
   if (!url) return NextResponse.json({ ok: false, error: '請輸入連結' });
 
   let parsedLat = parseLatLng(url);
+  let finalUrl = url;
+  let body = '';
 
   if (!parsedLat) {
     try {
@@ -41,13 +43,26 @@ export async function POST(req: NextRequest) {
         redirect: 'follow',
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; followacar/1.0)' },
       });
-      parsedLat = parseLatLng(res.url);
+      finalUrl = res.url;
+      parsedLat = parseLatLng(finalUrl);
       if (!parsedLat) {
-        const text = await res.text();
-        parsedLat = parseLatLng(text);
+        body = await res.text();
       }
     } catch {}
   }
+
+  // For Google "place share" links the redirected URL has ?q=<place name>
+  // and the body's center=... is a region fallback (often wrong).
+  // Geocode the place name via Nominatim before falling back to body parsing.
+  if (!parsedLat) {
+    const placeName = extractPlaceName(finalUrl);
+    if (placeName) {
+      const geo = await geocodeNominatim(placeName);
+      if (geo) parsedLat = geo;
+    }
+  }
+
+  if (!parsedLat && body) parsedLat = parseLatLng(body);
 
   if (!parsedLat) return NextResponse.json({ ok: false, error: '無法解析座標，請切換到「📍 輸入座標」模式' });
 
@@ -64,6 +79,29 @@ export async function DELETE(req: NextRequest) {
   if (!room) return NextResponse.json({ ok: false });
   await db`DELETE FROM destination WHERE room_id = ${room}`;
   return NextResponse.json({ ok: true });
+}
+
+function extractPlaceName(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const q = u.searchParams.get('q') ?? u.searchParams.get('query');
+    if (!q) return null;
+    if (/^-?\d+\.\d+\s*,\s*-?\d+\.\d+$/.test(q)) return null;
+    return q.trim();
+  } catch { return null; }
+}
+
+async function geocodeNominatim(query: string): Promise<{lat: string, lng: string} | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+      { headers: { 'User-Agent': 'followacar/1.0 (https://github.com/terrience001/followacar-next)' } }
+    );
+    if (!res.ok) return null;
+    const arr = await res.json() as Array<{ lat: string, lon: string }>;
+    if (!arr.length) return null;
+    return { lat: arr[0].lat, lng: arr[0].lon };
+  } catch { return null; }
 }
 
 function parseLatLng(s: string) {
