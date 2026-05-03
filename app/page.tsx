@@ -622,7 +622,7 @@ function bootApp(lang: Lang) {
   let localStream: MediaStream|null=null,inCall=false,muted=false,lastSigId=0;
 
   function initCall(){
-    el('my-name-label').textContent=ME;
+    el('my-avatar-wrap').title=ME;
     el('my-avatar-wrap').onclick=(e: any)=>{if(e.target.closest('#logout-btn'))return;el('avatar-input').click();};
     el<HTMLInputElement>('avatar-input').onchange=(e: any)=>{if(e.target.files[0])uploadAvatar(e.target.files[0]);e.target.value='';};
     el('group-call-btn').onclick=async()=>inCall?leaveGroupCall():await joinGroupCall();
