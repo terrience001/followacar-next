@@ -133,6 +133,10 @@ export default function Home() {
       <div id="app">
         <div id="map"></div>
         <button id="logout-btn" style={{position:'absolute',top:'2.6rem',right:'.5rem',zIndex:600,background:'rgba(248,113,113,0.92)',color:'#0f172a',border:'1.5px solid #7f1d1d',borderRadius:'8px',padding:'.3rem .7rem',fontSize:'.78rem',fontWeight:700,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,.4)'}}>{t.logout}</button>
+        <div id="pin-banner" style={{display:'none',position:'absolute',top:'2.6rem',left:'50%',transform:'translateX(-50%)',zIndex:600,background:'rgba(15,23,42,0.92)',color:'#f59e0b',border:'1.5px solid #f59e0b',borderRadius:'8px',padding:'.4rem .8rem',fontSize:'.8rem',fontWeight:600,boxShadow:'0 2px 8px rgba(0,0,0,.4)',whiteSpace:'nowrap'}}>
+          <span>📍 點地圖選位置</span>
+          <button id="pin-cancel" style={{marginLeft:'.6rem',background:'transparent',color:'#94a3b8',border:'1px solid #475569',borderRadius:'6px',padding:'.1rem .5rem',fontSize:'.75rem',cursor:'pointer'}}>取消</button>
+        </div>
         <div id="gps-bar">
           <span id="gps-txt">{t.waitingGps}</span>
           <button id="dest-btn">{t.setDest}</button>
@@ -203,6 +207,7 @@ export default function Home() {
           <div className="dest-mode-toggle">
             <button className="dest-mode-btn active" id="dest-mode-url">{t.pasteLink}</button>
             <button className="dest-mode-btn" id="dest-mode-coord">{t.enterCoord}</button>
+            <button className="dest-mode-btn" id="dest-mode-pin">📍 點地圖</button>
           </div>
           <div id="dest-url-section">
             <p style={{marginBottom:'.35rem'}} dangerouslySetInnerHTML={{__html: t.gmapsInstruct}} />
@@ -542,12 +547,36 @@ function bootApp(lang: Lang) {
   el('dest-btn').onclick=openDestDialog;
   el('dest-mode-url').onclick=()=>setDestMode('url');
   el('dest-mode-coord').onclick=()=>setDestMode('coord');
+  el('dest-mode-pin').onclick=()=>startPinPicking();
   function setDestMode(mode: string){
     destInputMode=mode;
-    el('dest-mode-url').classList.toggle('active',mode==='url');el('dest-mode-coord').classList.toggle('active',mode==='coord');
-    el('dest-url-section').style.display=mode==='url'?'':'none';el('dest-coord-section').style.display=mode==='coord'?'':'none';
+    el('dest-mode-url').classList.toggle('active',mode==='url');
+    el('dest-mode-coord').classList.toggle('active',mode==='coord');
+    el('dest-mode-pin').classList.toggle('active',mode==='pin');
+    el('dest-url-section').style.display=mode==='url'?'':'none';
+    el('dest-coord-section').style.display=mode==='coord'?'':'none';
     el('dest-err').style.display='none';
   }
+  let pinClickHandler: any=null;
+  function startPinPicking(){
+    const labelInput=el<HTMLInputElement>('dest-name');const label=labelInput.value.trim()||'🏁';
+    closeDestDialog();destMode=true;
+    el('pin-banner').style.display='block';
+    if(map?.getContainer)map.getContainer().style.cursor='crosshair';
+    pinClickHandler=async(e: any)=>{
+      stopPinPicking();
+      const lat=String(e.latlng.lat),lng=String(e.latlng.lng);
+      await saveDestCoords(lat,lng,label);
+    };
+    map?.on('click',pinClickHandler);
+  }
+  function stopPinPicking(){
+    if(pinClickHandler&&map){map.off('click',pinClickHandler);pinClickHandler=null;}
+    el('pin-banner').style.display='none';
+    if(map?.getContainer)map.getContainer().style.cursor='';
+    destMode=false;
+  }
+  el('pin-cancel').onclick=stopPinPicking;
   function openDestDialog(){
     el<HTMLInputElement>('dest-url').value='';el<HTMLInputElement>('dest-coord').value='';el<HTMLInputElement>('dest-name').value='';
     el('dest-err').style.display='none';setDestMode('url');destMode=true;
