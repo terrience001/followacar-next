@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   if (!parsedLat) {
     const placeName = extractPlaceName(finalUrl);
     if (placeName) {
-      const geo = await geocodeNominatim(placeName);
+      const geo = await geocodeAny(placeName);
       if (geo) parsedLat = geo;
     }
   }
@@ -91,6 +91,21 @@ function extractPlaceName(url: string): string | null {
   } catch { return null; }
 }
 
+async function geocodeGoogle(query: string): Promise<{lat: string, lng: string} | null> {
+  const key = process.env.GOOGLE_MAPS_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${key}`
+    );
+    if (!res.ok) return null;
+    const json = await res.json() as { status: string, results: Array<{ geometry: { location: { lat: number, lng: number } } }> };
+    if (json.status !== 'OK' || !json.results.length) return null;
+    const loc = json.results[0].geometry.location;
+    return { lat: String(loc.lat), lng: String(loc.lng) };
+  } catch { return null; }
+}
+
 async function geocodeNominatim(query: string): Promise<{lat: string, lng: string} | null> {
   try {
     const res = await fetch(
@@ -102,6 +117,10 @@ async function geocodeNominatim(query: string): Promise<{lat: string, lng: strin
     if (!arr.length) return null;
     return { lat: arr[0].lat, lng: arr[0].lon };
   } catch { return null; }
+}
+
+async function geocodeAny(query: string): Promise<{lat: string, lng: string} | null> {
+  return (await geocodeGoogle(query)) ?? (await geocodeNominatim(query));
 }
 
 function parseLatLng(s: string) {
