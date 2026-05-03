@@ -33,8 +33,22 @@ export async function POST(req: NextRequest) {
 
   if (!url) return NextResponse.json({ ok: false, error: '請輸入連結' });
 
-  // Parse coords from full URL (no short URL expansion server-side)
-  const parsedLat = parseLatLng(url);
+  let parsedLat = parseLatLng(url);
+
+  if (!parsedLat) {
+    try {
+      const res = await fetch(url, {
+        redirect: 'follow',
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; followacar/1.0)' },
+      });
+      parsedLat = parseLatLng(res.url);
+      if (!parsedLat) {
+        const text = await res.text();
+        parsedLat = parseLatLng(text);
+      }
+    } catch {}
+  }
+
   if (!parsedLat) return NextResponse.json({ ok: false, error: '無法解析座標，請切換到「📍 輸入座標」模式' });
 
   await db`
@@ -52,11 +66,14 @@ export async function DELETE(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-function parseLatLng(url: string) {
+function parseLatLng(s: string) {
   let m: RegExpMatchArray | null;
-  if (m = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
-  if (m = url.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
-  if (m = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
-  if (m = url.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
+  if (m = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
+  if (m = s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
+  if (m = s.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
+  if (m = s.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
+  if (m = s.match(/[?&]center=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
+  if (m = s.match(/"latitude"\s*:\s*(-?\d+\.\d+)\s*,\s*"longitude"\s*:\s*(-?\d+\.\d+)/)) return { lat: m[1], lng: m[2] };
+  if (m = s.match(/\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]/)) return { lat: m[1], lng: m[2] };
   return null;
 }
