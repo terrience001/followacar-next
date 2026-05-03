@@ -809,6 +809,7 @@ function bootApp(lang: Lang) {
 
   function startPolling(){
     restoreMyAvatar();loadAvatars();
+    setInterval(loadAvatars,5*60*1000);
     let es: EventSource|null=null,reconnectTimer: any=null,msgsInitialized=false;
     function applyMessages(list: any[]){
       if(!list?.length)return;const box=el('chat-msgs');
