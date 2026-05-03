@@ -135,6 +135,13 @@ export default function Home() {
         <div id="gps-bar">
           <span id="gps-txt">{t.waitingGps}</span>
           <button id="dest-btn">{t.setDest}</button>
+          <button id="share-photo-btn">📷</button>
+          <input type="file" id="photo-input" accept="image/*" style={{display:'none'}} />
+        </div>
+        <div id="photo-thumbs" style={{position:'absolute',bottom:'calc(230px + .6rem)',right:'.6rem',display:'flex',flexDirection:'column',gap:'.4rem',zIndex:500,maxHeight:'45vh',overflowY:'auto'}}></div>
+        <div id="photo-viewer" style={{display:'none',position:'fixed',inset:0,background:'rgba(0,0,0,0.92)',zIndex:2000,alignItems:'center',justifyContent:'center',cursor:'zoom-out'}}>
+          <img id="photo-viewer-img" style={{maxWidth:'95vw',maxHeight:'95vh',objectFit:'contain',borderRadius:'8px'}} alt="" />
+          <div id="photo-viewer-meta" style={{position:'absolute',top:'1rem',left:'1rem',color:'#f1f5f9',fontSize:'.85rem',background:'rgba(0,0,0,0.5)',padding:'.4rem .8rem',borderRadius:'6px'}}></div>
         </div>
         <div id="panel">
           <div id="tabs">
@@ -449,6 +456,47 @@ function bootApp(lang: Lang) {
     b.textContent=vs?.inCall?(vs.muted?'🔇':'🎙'):'📷';
   }
   function updateMembersVoice(){updateMembersList(lastMemberList);}
+
+  const photoIndex: Record<number,{from:string,url:string,created_at?:string}>={};
+  function addPhotoThumb(p: {id:number,from_name?:string,from?:string,url:string,created_at?:string}){
+    const id=Number(p.id),from=p.from_name||p.from||'';
+    if(!id||photoIndex[id])return;
+    photoIndex[id]={from,url:p.url,created_at:p.created_at};
+    const thumbs=el('photo-thumbs');
+    const img=document.createElement('img');img.className='photo-thumb';img.src=p.url;img.alt='';
+    img.title=from+(p.created_at?` · ${p.created_at}`:'');
+    img.onclick=()=>openPhotoViewer(id);
+    thumbs.insertBefore(img,thumbs.firstChild);
+    while(thumbs.children.length>20)thumbs.lastChild?.remove();
+  }
+  function openPhotoViewer(id: number){
+    const p=photoIndex[id];if(!p)return;
+    el<HTMLImageElement>('photo-viewer-img').src=p.url;
+    el('photo-viewer-meta').textContent=p.from+(p.created_at?` · ${p.created_at}`:'');
+    el('photo-viewer').style.display='flex';
+  }
+  el('photo-viewer').onclick=()=>{el('photo-viewer').style.display='none';};
+  async function loadPhotos(){
+    if(!ROOM)return;
+    try{
+      const list=await fetch(`/api/photo?room=${encodeURIComponent(ROOM)}`).then(r=>r.json()) as any[];
+      list.slice().reverse().forEach(addPhotoThumb);
+    }catch{}
+  }
+  el('share-photo-btn').onclick=()=>el('photo-input').click();
+  el<HTMLInputElement>('photo-input').onchange=async(e: any)=>{
+    const file=e.target.files?.[0];e.target.value='';
+    if(!file)return;
+    const btn=el('share-photo-btn') as HTMLButtonElement;
+    const orig=btn.textContent;btn.disabled=true;btn.textContent='⏳';
+    try{
+      const fd=new FormData();fd.append('room',ROOM);fd.append('from',ME);fd.append('file',file);
+      const res=await fetch('/api/photo',{method:'POST',body:fd}).then(r=>r.json());
+      if(!res.ok){alert(tr('uploadFailed','Upload failed: ')+(res.error||'unknown'));return;}
+      addPhotoThumb({id:res.id,from_name:ME,url:res.url});
+      broadcastSignal(JSON.stringify({type:'photo-share',id:res.id,from:ME,url:res.url}));
+    }finally{btn.disabled=false;btn.textContent=orig;}
+  };
 
   let destInputMode='url';
   el('dest-btn').onclick=openDestDialog;
@@ -793,6 +841,7 @@ function bootApp(lang: Lang) {
     else if(data.type==='call-leave'){voiceStatus[from]={inCall:false,muted:false};updateMembersVoice();}
     else if(data.type==='call-mute'){if(voiceStatus[from])voiceStatus[from].muted=data.muted;else voiceStatus[from]={inCall:true,muted:data.muted};updateMembersVoice();}
     else if(data.type==='avatar-update'){loadAvatars();}
+    else if(data.type==='photo-share'&&data.url){addPhotoThumb({id:data.id,from_name:data.from,url:data.url});}
     else if(data.type==='voice-offer'){
       if(!inCall)return;let pc=peers[from];
       if(!pc){pc=createPC(from);peerRoles[from]='callee';if(localStream)localStream.getTracks().forEach(t=>pc.addTrack(t,localStream!));}
@@ -808,7 +857,7 @@ function bootApp(lang: Lang) {
   function broadcastSignal(data: string){const fd=new FormData();fd.append('room',ROOM);fd.append('from',ME);fd.append('to','*');fd.append('data',data);fetch('/api/signal',{method:'POST',body:fd});}
 
   function startPolling(){
-    restoreMyAvatar();loadAvatars();
+    restoreMyAvatar();loadAvatars();loadPhotos();
     setInterval(loadAvatars,5*60*1000);
     let es: EventSource|null=null,reconnectTimer: any=null,msgsInitialized=false;
     function applyMessages(list: any[]){

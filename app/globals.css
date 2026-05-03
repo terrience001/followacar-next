@@ -29,7 +29,11 @@ input,textarea{touch-action:manipulation}
 .copy-btn{background:#334155;color:#f1f5f9;border:none;border-radius:6px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;align-self:flex-start}
 .copy-btn.copied{background:#22c55e;color:#fff}
 
-#app{display:none;flex-direction:column;height:100dvh}
+#app{display:none;flex-direction:column;height:100dvh;position:relative}
+#share-photo-btn{background:#0ea5e9;color:#0f172a;border:none;border-radius:6px;padding:.15rem .55rem;font-size:.85rem;cursor:pointer;flex-shrink:0;margin-left:.4rem}
+#photo-thumbs::-webkit-scrollbar{width:0}
+.photo-thumb{width:64px;height:64px;border-radius:8px;cursor:zoom-in;object-fit:cover;border:2px solid #1e293b;box-shadow:0 2px 8px rgba(0,0,0,.5);background:#334155}
+.photo-thumb:hover{border-color:#38bdf8}
 #map{flex:1;min-height:0}
 #gps-bar{background:#1e293b;font-size:.75rem;padding:.25rem .75rem;color:#94a3b8;flex-shrink:0;min-height:22px;display:flex;justify-content:space-between;align-items:center}
 #gps-bar.ok{color:#4ade80}
